@@ -1,0 +1,7 @@
+# binaries
+a.out
+*.exe
+
+# object files
+*.o
+
