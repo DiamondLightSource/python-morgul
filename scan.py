@@ -3,6 +3,7 @@ import sys
 import numpy
 import h5py
 
+from matplotlib import pyplot
 
 def main(datafile, gainfile, outputfile):
     data = h5py.File(datafile, "r")
@@ -39,8 +40,13 @@ def main(datafile, gainfile, outputfile):
     mean = image / n
     stddev = numpy.sqrt(image2 / n - mean * mean)
 
+    pyplot.imshow(stddev, vmin=0, vmax=4)
+    pyplot.show()
+
     # set non-null value where it would be null
     stddev[stddev == 0] = 1.0
+
+    print(f"{numpy.count_nonzero(stddev > 1)} noisy pixels")
 
     print(f"Mean variance: {numpy.mean(stddev):.2f} 12keV photons")
 
