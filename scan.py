@@ -48,6 +48,8 @@ def main(datafile, gainfile, outputfile):
 
     print(f"Most negative: {numpy.max(delta0):.2f} sigmas")
 
+    print(f"Most negative: {numpy.max(mean - imin):.2f} 12keV photons")
+
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
