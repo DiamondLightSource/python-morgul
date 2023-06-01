@@ -10,4 +10,5 @@ m = numpy.fromfile(open(sys.argv[1], "r"), dtype=numpy.float64, count=-1).reshap
 print(f"Mean variance: {numpy.mean(m):.2f}")
 
 pyplot.imshow(m, vmin=0, vmax=1)
+pyplot.colorbar()
 pyplot.show()
