@@ -40,22 +40,31 @@ def main(datafile, gainfile, outputfile):
     mean = image / n
     stddev = numpy.sqrt(image2 / n - mean * mean)
 
-    pyplot.imshow(stddev, vmin=0, vmax=4)
+    h, e = numpy.histogram(stddev, bins=100, range=(0, 5))
+
+    # identify pixels which are (i) too noisy and (ii) not noisy enough
+    # using Tukey outlier definitions
+    q1, q3 = numpy.percentile(stddev, [25, 75])
+    iqr = q3 - q1
+    print(f"Too quiet: {numpy.count_nonzero(stddev < (q1 - 3 * iqr))}")
+    print(f"Too noisy: {numpy.count_nonzero(stddev > (q3 + 3 * iqr))}")
+
+    mask = numpy.ones(shape=(raw.shape[1:]), dtype=numpy.int32)
+
+    mask[stddev < (q1 - 3 * iqr)] = 0
+    mask[stddev > (q3 + 3 * iqr)] = 0
+
+    imin *= mask
+    imax *= mask
+
+    h, e = numpy.histogram(imax - imin, bins=100, range=(0, 100), weights=mask)
+
+    for j in range(len(h)):
+        print(f"{e[j]:.2f} {e[j+1]:.2f}, {h[j]}")
+
+    pyplot.imshow(stddev * mask, vmin=0, vmax=1)
+    pyplot.colorbar()
     pyplot.show()
-
-    # set non-null value where it would be null
-    stddev[stddev == 0] = 1.0
-
-    print(f"{numpy.count_nonzero(stddev > 1)} noisy pixels")
-
-    print(f"Mean variance: {numpy.mean(stddev):.2f} 12keV photons")
-
-    delta0 = (mean - imin) / stddev
-
-    print(f"Most negative: {numpy.max(delta0):.2f} sigmas")
-
-    print(f"Most negative: {numpy.max(mean - imin):.2f} 12keV photons")
-
 
 if __name__ == "__main__":
     main(*sys.argv[1:])

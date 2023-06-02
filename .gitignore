@@ -5,3 +5,5 @@ a.out
 # object files
 *.o
 
+# environment
+ENV/*
