@@ -186,7 +186,7 @@ int work(char *filename, int skip, int offset) {
     }
 
     char result[100];
-    sprintf(result, "frame_%05d.raw", i - skip);
+    sprintf(result, "frame_%05d.raw", i - skip + offset);
     FILE *fout = fopen(result, "wb");
     fwrite(output, sizeof(unsigned int), NY * NX, fout);
     fclose(fout);
