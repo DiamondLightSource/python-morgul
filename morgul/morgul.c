@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 double *g0 = NULL;
@@ -45,6 +46,38 @@ int *mask = NULL;
 
 #define NY 512
 #define NX 1024
+
+// random bit
+inline int coin() { return rand() & 0x1; }
+
+// embiggen - unpack the double and quadro pixels to deal with the
+// segments where the ASICs meet
+void embiggen(unsigned int *in, unsigned int *out) {
+  unsigned int *work =
+      (unsigned int *)malloc(512 * 1030 * sizeof(unsigned int));
+  int iout = 0;
+  int jout = 0;
+  for (int i = 0; i < NY; i++) {
+    if (i == 255) {
+      // deal with that row
+    } else if (i == 256) {
+      // deal with that
+    } else {
+      for (int j = 0; j < NX; j++) {
+        int p = in[i * NX + j];
+      }
+    }
+  }
+  // first unpack in the horizontal
+  // for row in range 512
+  // unpack first segment
+  // unpack last pixel
+  // unpack next segments as first pixel, memcpy middle, last pixel
+  // unpack first pixel of last segment
+  // memcpy rest of segment
+
+  // then unpack in the vertical
+}
 
 void setup(char *filename) {
   FILE *fin = fopen(filename, "rb");
