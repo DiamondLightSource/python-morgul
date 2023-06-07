@@ -132,7 +132,7 @@ void pedestal(char *filename) {
   free(pixels);
 }
 
-void work(char *filename, int skip) {
+int work(char *filename, int skip, int offset) {
 
   struct stat finfo;
 
@@ -186,7 +186,7 @@ void work(char *filename, int skip) {
     }
 
     char result[100];
-    sprintf(result, "frame_%05d.raw", i);
+    sprintf(result, "frame_%05d.raw", i - skip);
     FILE *fout = fopen(result, "wb");
     fwrite(output, sizeof(unsigned int), NY * NX, fout);
     fclose(fout);
@@ -195,6 +195,8 @@ void work(char *filename, int skip) {
 
   free(output);
   free(pixels);
+
+  return nn - skip;
 }
 
 void teardown(void) {
@@ -209,7 +211,8 @@ void teardown(void) {
 
 int main(int argc, char **argv) {
   if (argc < 4) {
-    fprintf(stderr, "%s energy (keV) gain.dat data0 data1 .... dataN\n", argv[0]);
+    fprintf(stderr, "%s energy (keV) gain.dat data0 data1 .... dataN\n",
+            argv[0]);
     return 1;
   }
 
@@ -219,7 +222,13 @@ int main(int argc, char **argv) {
 
   setup(gain);
   pedestal(data);
-  work(data, 2000);
+
+  int offset = 0;
+  for (int j = 3; j < argc; j++) {
+    data = argv[j];
+    int skip = j == 3 ? 2000 : 0;
+    offset += work(data, skip, offset);
+  }
 
   teardown();
 
