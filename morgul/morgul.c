@@ -39,7 +39,7 @@ double *p0 = NULL;
 double *p1 = NULL;
 double *p2 = NULL;
 
-double wavelength = 0.0;
+double energy_keV = 0.0;
 
 int *mask = NULL;
 
@@ -170,13 +170,13 @@ int work(char *filename, int skip, int offset) {
 
       switch (mode) {
       case 3:
-        output[p] = (pixel - p2[p]) / g2[p];
+        output[p] = (pixel - p2[p]) / (g2[p] * energy_keV);
         break;
       case 1:
-        output[p] = (pixel - p1[p]) / g1[p];
+        output[p] = (pixel - p1[p]) / (g1[p] * energy_keV);
         break;
       default:
-        output[p] = (pixel - p0[p]) / g0[p];
+        output[p] = (pixel - p0[p]) / (g0[p] * energy_keV);
         break;
       }
 
@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  wavelength = atof(argv[1]);
+  energy_keV = atof(argv[1]);
   char *gain = argv[2];
   char *data = argv[3];
 
