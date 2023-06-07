@@ -19,7 +19,7 @@
  *
  *  Usage:
  *
- *  morgul gain.dat data0 data1 ... dataN
+ *  morgul energy (keV) gain.dat data0 data1 ... dataN
  *
  *  This version also assumes that the data are saved as raw / unformatted
  *  data with 48 byte header (assumed to contain nonsense) followed by little
@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 double *g0 = NULL;
 double *g1 = NULL;
@@ -37,6 +38,8 @@ double *g2 = NULL;
 double *p0 = NULL;
 double *p1 = NULL;
 double *p2 = NULL;
+
+double wavelength = 0.0;
 
 int *mask = NULL;
 
@@ -129,7 +132,16 @@ void pedestal(char *filename) {
   free(pixels);
 }
 
-void work(char *filename) {
+void work(char *filename, int skip) {
+
+  struct stat finfo;
+
+  // get the number of frames in the file based on the size in bytes
+  stat(filename, &finfo);
+  int nn = finfo.st_size / (48 + 2 * 512 * 1024);
+
+  printf("%s -> %d frames\n", filename, nn);
+
   FILE *fin = fopen(filename, "rb");
 
   unsigned short *pixels =
@@ -137,15 +149,15 @@ void work(char *filename) {
 
   unsigned int *output = (unsigned int *)malloc(NY * NX * sizeof(unsigned int));
 
-  // skip warmup frames
+  // skip warmup frames if present
 
-  for (int i = 0; i < 2000; i++) {
+  for (int i = 0; i < skip; i++) {
     fseek(fin, 48 + NY * NX * sizeof(unsigned short), SEEK_CUR);
   }
 
   // now start to do some calculations
 
-  for (int i = 2000; i < 10000; i++) {
+  for (int i = skip; i < nn; i++) {
     uint16_t low = 0x3fff;
     fseek(fin, 48, SEEK_CUR);
     fread((void *)pixels, sizeof(unsigned short), NY * NX, fin);
@@ -196,17 +208,18 @@ void teardown(void) {
 }
 
 int main(int argc, char **argv) {
-  if (argc < 3) {
-    fprintf(stderr, "%s gain data\n", argv[0]);
+  if (argc < 4) {
+    fprintf(stderr, "%s energy (keV) gain.dat data0 data1 .... dataN\n", argv[0]);
     return 1;
   }
 
-  char *gain = argv[1];
-  char *data = argv[2];
+  wavelength = atof(argv[1]);
+  char *gain = argv[2];
+  char *data = argv[3];
 
   setup(gain);
   pedestal(data);
-  work(data);
+  work(data, 2000);
 
   teardown();
 
