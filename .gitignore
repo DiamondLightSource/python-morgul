@@ -7,3 +7,6 @@ a.out
 
 # environment
 ENV/*
+
+# data files
+*.h5
