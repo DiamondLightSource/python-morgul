@@ -10,3 +10,6 @@ ENV/*
 
 # data files
 *.h5
+*.dat
+*.raw
+
