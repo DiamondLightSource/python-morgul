@@ -52,6 +52,11 @@ void embiggen(unsigned int *in, unsigned int *out) {
 
 int main(int argc, char **argv) {
   setup();
+
+  FILE * fout = fopen("test_pattern.dat", "wb");
+  fwrite(in, sizeof(unsigned int), NY * NX, fout);
+  fclose(fout);
+
   teardown();
   return 0;
 }
