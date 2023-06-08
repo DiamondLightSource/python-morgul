@@ -42,9 +42,6 @@ int coin() { return rand() & 0x1; }
 // embiggen - unpack the double and quadro pixels to deal with the
 // segments where the ASICs meet
 void embiggen(unsigned int *in, unsigned int *out) {
-  unsigned int *work =
-      (unsigned int *)malloc(514 * 1024 * sizeof(unsigned int));
-
   // copy the simple bits in -> out
   for (int i = 1; i < 255; i++) {
     for (int j = 1; j < 255; j++) {
@@ -58,88 +55,6 @@ void embiggen(unsigned int *in, unsigned int *out) {
       out[i * 1030 + j + 774 + 265740] = in[i * 1024 + j + 768 + 262144];
     }
   }
-
-  // straight copy column 0, 1023 - outside of the to-be-doubled regions
-  for (int i = 0; i < 255; i++) {
-    // top half
-    out[i * 1030] = in[i * 1024];
-    out[i * 1030 + 1029] = in[i * 1024 + 1023];
-    // bottom half
-    out[(i + 258) * 1030] = in[(i + 257) * 1024];
-    out[(i + 258) * 1030 + 1029] = in[(i + 257) * 1024 + 1023];
-  }
-
-  // straight copy row 0, 511
-  for (int j = 1; j < 255; j++) {
-    // top half
-    out[j] = in[j];
-    out[j + 258] = in[j + 256];
-    out[j + 516] = in[j + 512];
-    out[j + 774] = in[j + 786];
-    out[j + 1030 * 513] = in[j + 511 * 1024];
-    out[j + 258 + 1030 * 513] = in[j + 256 + 511 * 1024];
-    out[j + 516 + 1030 * 513] = in[j + 512 + 511 * 1024];
-    out[j + 774 + 1030 * 513] = in[j + 786 + 511 * 1024];
-  }
-
-  // then split pixels - horizontal band - in -> work
-
-  for (int j = 0; j < 1024; j++) {
-    work[1024 * 255 + j] = in[1024 * 255 + j] / 2;
-    work[1024 * 256 + j] = in[1024 * 255 + j] / 2;
-    if (in[1024 * 255 + j] & 1) {
-      work[1024 * 255 + j + coin() * 1024] ++;
-    }
-    work[1024 * 257 + j] = in[1024 * 256 + j] / 2;
-    work[1024 * 258 + j] = in[1024 * 256 + j] / 2;
-    if (in[1024 * 256 + j] & 1) {
-      work[1024 * 257 + j + coin() * 1024] ++;
-    }
-  }
-
-  // then split pixels - vertical bands - work -> out
-  for (int i = 0; i < 256; i++) {
-    // column 0
-    out[1030 * i + 255] = in[1024 * i + 255] / 2;
-    out[1030 * i + 256] = in[1024 * i + 255] / 2;
-    if (in[1024 * i + 255] & 1) {
-      out[1030 * i + 255 + coin()] ++;
-    }
-    out[1030 * i + 257] = in[1024 * i + 256] / 2;
-    out[1030 * i + 258] = in[1024 * i + 256] / 2;
-    if (in[1024 * i + 256] & 1) {
-      out[1030 * i + 257 + coin()] ++;
-    }
-
-    // column 1
-    out[1030 * i + 255 + 258] = in[1024 * i + 255 + 256] / 2;
-    out[1030 * i + 256 + 258] = in[1024 * i + 255 + 256] / 2;
-    if (in[1024 * i + 255 + 256] & 1) {
-      out[1030 * i + 255 + 258 + coin()] ++;
-    }
-    out[1030 * i + 257 + 258] = in[1024 * i + 256 + 256] / 2;
-    out[1030 * i + 258 + 258] = in[1024 * i + 256 + 256] / 2;
-    if (in[1024 * i + 256 + 256] & 1) {
-      out[1030 * i + 257 + 258 + coin()] ++;
-    }
-
-    // column 1
-    out[1030 * i + 255 + 516] = in[1024 * i + 255 + 512] / 2;
-    out[1030 * i + 256 + 516] = in[1024 * i + 255 + 512] / 2;
-    if (in[1024 * i + 255 + 512] & 1) {
-      out[1030 * i + 255 + 516 + coin()] ++;
-    }
-    out[1030 * i + 257 + 516] = in[1024 * i + 256 + 512] / 2;
-    out[1030 * i + 258 + 516] = in[1024 * i + 256 + 512] / 2;
-    if (in[1024 * i + 256 + 512] & 1) {
-      out[1030 * i + 257 + 516 + coin()] ++;
-    }
-  }
-
-
-  // copy everyone else - work -> out
-
-  free(work);
 }
 
 int main(int argc, char **argv) {
