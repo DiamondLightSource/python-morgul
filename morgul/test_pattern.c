@@ -98,6 +98,18 @@ void embiggen(unsigned int *in, unsigned int *out) {
   }
 
   // then split pixels - vertical bands - work -> out
+  for (int i = 0; i < 256; i++) {
+    out[1024 * i + 255] = work[1024 * i + 255] / 2;
+    out[1024 * i + 256] = work[1024 * i + 255] / 2;
+    if (work[1024 * i + 255] & 1) {
+      out[1024 * i + 255 + coin()] ++;
+    }
+    out[1024 * i + 257] = work[1024 * i + 256] / 2;
+    out[1024 * i + 258] = work[1024 * i + 256] / 2;
+    if (work[1024 * i + 256] & 1) {
+      out[1024 * i + 257 + coin()] ++;
+    }
+  }
 
 
   // copy everyone else - work -> out
