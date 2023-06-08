@@ -59,6 +59,18 @@ void embiggen(unsigned int *in, unsigned int *out) {
     }
   }
 
+  // straight copy column 0, 1023 - outside of the to-be-doubled regions
+  for (int i = 0; i < 255; i++) {
+    // top half
+    out[i * 1030] = in[i * 1024];
+    out[i * 1030 + 1029] = in[i * 1024 + 1023];
+    // bottom half
+    out[(i + 258) * 1030] = in[(i + 257) * 1024];
+    out[(i + 258) * 1030 + 1029] = in[(i + 257) * 1024 + 1023];
+  }
+
+  // straight copy row 0, 511
+
   // then split pixels - horizontal band - in -> work
 
   // then split pixels - vertical band - work -> out
