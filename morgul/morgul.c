@@ -47,36 +47,25 @@ int *mask = NULL;
 #define NY 512
 #define NX 1024
 
-// random bit
-inline int coin() { return rand() & 0x1; }
-
-// embiggen - unpack the double and quadro pixels to deal with the
-// segments where the ASICs meet
+// embiggen - unpack the central 254x254 pixel regions of each
+// ASIC, everything else will be masked
 void embiggen(unsigned int *in, unsigned int *out) {
-  unsigned int *work =
-      (unsigned int *)malloc(512 * 1030 * sizeof(unsigned int));
-  int iout = 0;
-  int jout = 0;
-  for (int i = 0; i < NY; i++) {
-    if (i == 255) {
-      // deal with that row
-    } else if (i == 256) {
-      // deal with that
-    } else {
-      for (int j = 0; j < NX; j++) {
-        int p = in[i * NX + j];
-      }
+  // set everything as MASK pattern
+  memset(out, 0xff, 1030 * 514 * sizeof(unsigned int));
+
+  // copy the simple bits in -> out
+  for (int i = 1; i < 255; i++) {
+    for (int j = 1; j < 255; j++) {
+      out[i * 1030 + j] = in[i * 1024 + j];
+      out[i * 1030 + j + 258] = in[i * 1024 + j + 256];
+      out[i * 1030 + j + 516] = in[i * 1024 + j + 512];
+      out[i * 1030 + j + 774] = in[i * 1024 + j + 768];
+      out[i * 1030 + j + 265740] = in[i * 1024 + j + 262144];
+      out[i * 1030 + j + 258 + 265740] = in[i * 1024 + j + 256 + 262144];
+      out[i * 1030 + j + 516 + 265740] = in[i * 1024 + j + 512 + 262144];
+      out[i * 1030 + j + 774 + 265740] = in[i * 1024 + j + 768 + 262144];
     }
   }
-  // first unpack in the horizontal
-  // for row in range 512
-  // unpack first segment
-  // unpack last pixel
-  // unpack next segments as first pixel, memcpy middle, last pixel
-  // unpack first pixel of last segment
-  // memcpy rest of segment
-
-  // then unpack in the vertical
 }
 
 void setup(char *filename) {
@@ -180,7 +169,10 @@ int work(char *filename, int skip, int offset) {
   unsigned short *pixels =
       (unsigned short *)malloc(NY * NX * sizeof(unsigned short));
 
-  unsigned int *output = (unsigned int *)malloc(NY * NX * sizeof(unsigned int));
+  unsigned int *scratch =
+      (unsigned int *)malloc(NY * NX * sizeof(unsigned int));
+  unsigned int *output =
+      (unsigned int *)malloc(514 * 1030 * sizeof(unsigned int));
 
   // skip warmup frames if present
 
@@ -203,25 +195,27 @@ int work(char *filename, int skip, int offset) {
 
       switch (mode) {
       case 3:
-        output[p] = (pixel - p2[p]) / (g2[p] * energy_keV);
+        scratch[p] = (pixel - p2[p]) / (g2[p] * energy_keV);
         break;
       case 1:
-        output[p] = (pixel - p1[p]) / (g1[p] * energy_keV);
+        scratch[p] = (pixel - p1[p]) / (g1[p] * energy_keV);
         break;
       default:
-        output[p] = (pixel - p0[p]) / (g0[p] * energy_keV);
+        scratch[p] = (pixel - p0[p]) / (g0[p] * energy_keV);
         break;
       }
 
       if (mask[p] == 0) {
-        output[p] = 0xffffffff;
+        scratch[p] = 0xffffffff;
       }
     }
+
+    embiggen(scratch, output);
 
     char result[100];
     sprintf(result, "frame_%05d.raw", i - skip + offset);
     FILE *fout = fopen(result, "wb");
-    fwrite(output, sizeof(unsigned int), NY * NX, fout);
+    fwrite(output, sizeof(unsigned int), 514 * 1030, fout);
     fclose(fout);
     printf("Wrote %s\n", result);
   }
