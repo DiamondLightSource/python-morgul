@@ -46,7 +46,14 @@ inline int coin() { return rand() & 0x1; }
 // segments where the ASICs meet
 void embiggen(unsigned int *in, unsigned int *out) {
   unsigned int *work =
-      (unsigned int *)malloc(512 * 1030 * sizeof(unsigned int));
+      (unsigned int *)malloc(514 * 1024 * sizeof(unsigned int));
+
+  // copy the simple bits in -> out
+
+  // then split pixels - horizontal band - in -> work
+
+  // then split pixels - vertical band - work -> out
+
   free(work);
 }
 
