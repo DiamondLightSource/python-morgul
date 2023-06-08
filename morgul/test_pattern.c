@@ -37,7 +37,7 @@ void teardown() {
   free(out);
 }
 
-inline int coin() { return rand() & 0x1; }
+int coin() { return rand() & 0x1; }
 
 // embiggen - unpack the double and quadro pixels to deal with the
 // segments where the ASICs meet
@@ -84,7 +84,23 @@ void embiggen(unsigned int *in, unsigned int *out) {
 
   // then split pixels - horizontal band - in -> work
 
-  // then split pixels - vertical band - work -> out
+  for (int j = 0; j < 1024; j++) {
+    work[1024 * 255 + j] = in[1024 * 255 + j] / 2;
+    work[1024 * 256 + j] = in[1024 * 255 + j] / 2;
+    if (in[1024 * 255 + j] & 1) {
+      work[1024 * 255 + j + coin() * 1024] ++;
+    }
+    work[1024 * 257 + j] = in[1024 * 256 + j] / 2;
+    work[1024 * 258 + j] = in[1024 * 256 + j] / 2;
+    if (in[1024 * 256 + j] & 1) {
+      work[1024 * 257 + j + coin() * 1024] ++;
+    }
+  }
+
+  // then split pixels - vertical bands - work -> out
+
+
+  // copy everyone else - work -> out
 
   free(work);
 }
