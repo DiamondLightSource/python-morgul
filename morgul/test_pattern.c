@@ -70,6 +70,17 @@ void embiggen(unsigned int *in, unsigned int *out) {
   }
 
   // straight copy row 0, 511
+  for (int j = 1; j < 255; j++) {
+    // top half
+    out[j] = in[j];
+    out[j + 258] = in[j + 256];
+    out[j + 516] = in[j + 512];
+    out[j + 774] = in[j + 786];
+    out[j + 1030 * 513] = in[j + 511 * 1024];
+    out[j + 258 + 1030 * 513] = in[j + 256 + 511 * 1024];
+    out[j + 516 + 1030 * 513] = in[j + 512 + 511 * 1024];
+    out[j + 774 + 1030 * 513] = in[j + 786 + 511 * 1024];
+  }
 
   // then split pixels - horizontal band - in -> work
 
