@@ -33,6 +33,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "bitshuffle.h"
+
 double *g0 = NULL;
 double *g1 = NULL;
 double *g2 = NULL;
@@ -212,12 +214,14 @@ int work(char *filename, int skip, int offset) {
 
     embiggen(scratch, output);
 
+    long long int compressed_size = bshuf_compress_lz4(output, scratch, 514 * 1030, 4, 0);
+
     char result[100];
-    sprintf(result, "frame_%05d.raw", i - skip + offset);
+    sprintf(result, "frame_%05d.bslz4", i - skip + offset);
     FILE *fout = fopen(result, "wb");
-    fwrite(output, sizeof(unsigned int), 514 * 1030, fout);
+    fwrite(scratch, 1, compressed_size, fout);
     fclose(fout);
-    printf("Wrote %s\n", result);
+    printf("Wrote %s %lld\n", result, compressed_size);
   }
 
   free(output);
