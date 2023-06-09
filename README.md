@@ -20,3 +20,12 @@ Necessary corrections -
 - convert to photons, subtract pedestal, add constant, save to file with compression
 
 This also requires the photon energy.
+
+## MORGUL / MORANNON
+
+Local equivalent of the JungfrauJoch system designed with simplicity in mind and potential for running automatically as a part of routine operation. Two main steps:
+
+- `morannon`: creation of calibration files
+- `morgul`: correction of experimental data
+
+The former takes the published gain correction tables and three "dark" runs collected with no photon exposure to determine the pedestal values for the three gain modes (g0, g1, g2) at whatever you have for the current integration time and temperature on the chiller, ideally performed within an hour of the data being collected. The other applies these correction files to raw data to give corrected data (with the photon energy), with output compressed with bitshuffle / LZ4 to HDF5.
