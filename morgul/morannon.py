@@ -60,12 +60,19 @@ def average_pedestal(gain_mode, filename):
         d = f["data"]
         s = d.shape
         image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
-        mask = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.int32)
 
         for j in range(s[0]):
             i = d[j]
             if gain_mode == 0:
                 i[i > 0x3fff] = 0
+            elif gain_mode == 2:
+                i[i < 0x8000] = 0
+            else:
+                i[i < 0x4000] = 0
+                i[i >= 0x8000] = 0
+            image += i
+
+        return image / s[0]
 
 def main():
     parser = argparse.ArgumentParser(
@@ -98,6 +105,13 @@ def main():
     assert args.p2
 
     p0 = average_pedestal(0, args.p0)
+    p1 = average_pedestal(1, args.p1)
+    p2 = average_pedestal(2, args.p2)
+
+    with h5py.File(f"{args.detector}_pedestal.h5", "w") as f:
+        f.create_dataset(f"p0", data=p0)
+        f.create_dataset(f"p1", data=p1)
+        f.create_dataset(f"p2", data=p2)
 
 
 if __name__ == "__main__":
