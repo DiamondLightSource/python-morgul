@@ -8,6 +8,8 @@ import numpy
 import h5py
 
 hostname = os.uname()[1]
+if "diamond.ac.uk" in hostname:
+    hostname = "xxx.diamond.ac.uk"
 install = os.path.dirname(os.path.realpath(__file__))
 
 
