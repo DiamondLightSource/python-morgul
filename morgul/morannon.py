@@ -61,12 +61,26 @@ def main():
     parser.add_argument(
         "-i", "--init", action="store_true", help="create initial files"
     )
+    parser.add_argument(
+        "-0", "--pedestal-0", dest="p0", help="pedestal run at gain mode 0"
+    )
+    parser.add_argument(
+        "-1", "--pedestal-1", dest="p1", help="pedestal run at gain mode 1"
+    )
+    parser.add_argument(
+        "-2", "--pedestal-2", dest="p2", help="pedestal run at gain mode 2"
+    )
     args = parser.parse_args()
 
     assert args.detector
 
     if args.init:
         init(args.detector)
+        return
+
+    assert args.p0
+    assert args.p1
+    assert args.p2
 
 
 if __name__ == "__main__":
