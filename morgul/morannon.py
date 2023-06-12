@@ -1,3 +1,4 @@
+import argparse
 import configparser
 import glob
 import os
@@ -40,7 +41,7 @@ def psi_gain_maps(detector):
     return result
 
 
-def main(detector):
+def init(detector):
     maps = psi_gain_maps(detector)
 
     with h5py.File(f"{detector}_calib.h5", "w") as f:
@@ -51,6 +52,22 @@ def main(detector):
                 g.create_dataset(f"g{j}", data=g012[j])
 
 
+def main():
+    parser = argparse.ArgumentParser(
+        prog="morannon",
+        description="Calibration setup for Jungfrau",
+    )
+    parser.add_argument("detector")
+    parser.add_argument(
+        "-i", "--init", action="store_true", help="create initial files"
+    )
+    args = parser.parse_args()
+
+    assert args.detector
+
+    if args.init:
+        init(args.detector)
+
+
 if __name__ == "__main__":
-    detector = sys.argv[1]
-    main(detector)
+    main()
