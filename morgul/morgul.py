@@ -53,6 +53,26 @@ def get_pedestals(pedestal_file):
     return pedestals
 
 
+def embiggen(packed):
+    """Unpack the data from ASICS to the pixel-doubled form, masking the affected
+    pixels so this has the result of just slightly embiggening the images. Since
+    this is a copy have it also do the inversion (pay attention people.)"""
+
+    assert packed.shape == (512, 1024)
+
+    bigger = numpy.full((514, 1030), 0xffffffff, dtype=numpy.int32)
+
+    for i in range(2):
+        for j in range(4):
+            for k in range(1, 255):
+                I = i * 256
+                _I = 513 - i * 257 - k
+                J = j * 256
+                _J = j * 257 + 2 * j - 1 if j else 0
+                bigger[_I,_J+1:_J+255] = packed[I + k, J + 1:J + 255]
+
+    return bigger
+
 def main():
     parser = argparse.ArgumentParser(
         prog="morgul",
@@ -92,9 +112,9 @@ def main():
         s = r.shape
         d = f.create_dataset(
             "data",
-            shape=s,
+            shape=(s[0], 514, 1030),
             dtype=numpy.int32,
-            chunks=(1, s[1], s[2]),
+            chunks=(1, 514, 1030),
             **hdf5plugin.Bitshuffle(lz4=True),
         )
         for j in range(s[0]):
@@ -116,7 +136,7 @@ def main():
                     (gain == 3) * (numpy.bitwise_and(raw, 0x3FFF)) * m2
                     - pedestals["p2"]
                 ) / (g012[2] * energy)
-            d[j] = numpy.around(frame)
+            d[j] = embiggen(numpy.around(frame))
 
 
 if __name__ == "__main__":
