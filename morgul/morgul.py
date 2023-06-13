@@ -68,8 +68,8 @@ def embiggen(packed):
                 I = i * 256
                 _I = 513 - i * 257 - k
                 J = j * 256
-                _J = j * 257 + 2 * j - 1 if j else 0
-                bigger[_I,_J+1:_J+255] = packed[I + k, J + 1:J + 255]
+                _J = j * 258 - 1 if j else 0
+                bigger[_I,(_J+1):(_J+255)] = packed[I + k, (J + 1):(J + 255)]
 
     return bigger
 
