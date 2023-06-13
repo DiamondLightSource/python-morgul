@@ -29,3 +29,14 @@ Local equivalent of the JungfrauJoch system designed with simplicity in mind and
 - `morgul`: correction of experimental data
 
 The former takes the published gain correction tables and three "dark" runs collected with no photon exposure to determine the pedestal values for the three gain modes (g0, g1, g2) at whatever you have for the current integration time and temperature on the chiller, ideally performed within an hour of the data being collected. The other applies these correction files to raw data to give corrected data (with the photon energy), with output compressed with bitshuffle / LZ4 to HDF5.
+
+## To Do
+
+Tasks for `morannon`:
+- [ ] determine trusted pixel masks from dark data (e.g. wrong gain mode, surprising values) -> `m0`, `m1`, `m2` data sets in HDF5 output
+- [ ] write structured data to pedestal so more than one module can go in file
+
+Tasks for `morgul`:
+- [ ] use gain maps already written to HDF5 file
+- [ ] expand data from ASICs
+- [ ] mask bad pixels as `0xffffffff`
