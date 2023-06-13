@@ -85,6 +85,8 @@ def main():
 
     assert not os.path.exists(output)
 
+    # FIXME need to add the embiggen code
+
     with h5py.File(args.data, "r") as i, h5py.File(output, "w") as f:
         r = i["data"]
         s = r.shape

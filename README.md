@@ -40,3 +40,25 @@ Tasks for `morgul`:
 - [ ] use gain maps already written to HDF5 file
 - [ ] expand data from ASICs
 - [ ] mask bad pixels as `0xffffffff`
+
+## Usage
+
+Initial set up:
+
+```
+python3 ~/git/jungfrau-commissioning/morgul/morannon.py --init jf1md
+```
+
+Pedestal calculation:
+
+```
+python3 ~/git/jungfrau-commissioning/morgul/morannon.py -0 3_data_0_0_100.h5 jf1md0
+python3 ~/git/jungfrau-commissioning/morgul/morannon.py -0 3_data_1_0_100.h5 jf1md1
+```
+
+Correction:
+
+```
+python3 ~/git/jungfrau-commissioning/morgul/morgul.py -p ../20230612_162257/jf1md0_pedestal.h5 jf1md -m M420 -e 8.04 -d 3_data_0_0_100.h5
+python3 ~/git/jungfrau-commissioning/morgul/morgul.py -p ../20230612_162257/jf1md1_pedestal.h5 jf1md -m M418 -e 8.04 -d 3_data_1_0_100.h5
+```
