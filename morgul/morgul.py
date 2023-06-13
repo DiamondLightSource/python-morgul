@@ -8,6 +8,8 @@ import h5py
 
 import hdf5plugin
 
+import tqdm
+
 hostname = os.uname()[1]
 if "diamond.ac.uk" in hostname:
     hostname = "xxx.diamond.ac.uk"
@@ -66,7 +68,7 @@ def embiggen(packed):
         for j in range(4):
             for k in range(1, 255):
                 I = i * 256
-                _I = 513 - i * 257 - k
+                _I = 513 - i * 258 - k
                 J = j * 256
                 _J = j * 258 - 1 if j else 0
                 bigger[_I, (_J + 1) : (_J + 255)] = packed[I + k, (J + 1) : (J + 255)]
@@ -118,7 +120,7 @@ def main():
             chunks=(1, 514, 1030),
             **hdf5plugin.Bitshuffle(lz4=True),
         )
-        for j in range(s[0]):
+        for j in tqdm.tqdm(range(s[0])):
             raw = r[j]
             gain = numpy.right_shift(raw, 14)
             m0 = pedestals["p0"] != 0
