@@ -60,7 +60,7 @@ def embiggen(packed):
 
     assert packed.shape == (512, 1024)
 
-    bigger = numpy.full((514, 1030), 0xffffffff, dtype=numpy.int32)
+    bigger = numpy.full((514, 1030), 0xFFFFFFFF, dtype=numpy.int32)
 
     for i in range(2):
         for j in range(4):
@@ -69,9 +69,10 @@ def embiggen(packed):
                 _I = 513 - i * 257 - k
                 J = j * 256
                 _J = j * 258 - 1 if j else 0
-                bigger[_I,(_J+1):(_J+255)] = packed[I + k, (J + 1):(J + 255)]
+                bigger[_I, (_J + 1) : (_J + 255)] = packed[I + k, (J + 1) : (J + 255)]
 
     return bigger
+
 
 def main():
     parser = argparse.ArgumentParser(

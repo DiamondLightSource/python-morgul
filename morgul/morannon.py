@@ -65,7 +65,7 @@ def average_pedestal(gain_mode, filename):
         for j in range(s[0]):
             i = d[j]
             gain = numpy.right_shift(i, 14)
-            valid = (gain == gain_mode)
+            valid = gain == gain_mode
             i *= valid
             mask += valid
             image += i
@@ -75,6 +75,7 @@ def average_pedestal(gain_mode, filename):
         mask[mask == 0] = 1
 
         return image / mask
+
 
 def main():
     parser = argparse.ArgumentParser(
