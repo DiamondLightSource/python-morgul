@@ -130,14 +130,14 @@ def main():
             if "p1" in pedestals:
                 m1 = pedestals["p1"] != 0
                 frame += (
-                    (gain == 1) * (numpy.bitwise_and(raw, 0x3FFF)) * m1
-                    - pedestals["p1"]
+                    (gain == 1)
+                    * ((numpy.bitwise_and(raw, 0x3FFF)) * m1 - pedestals["p1"])
                 ) / (g012[1] * energy)
             if "p2" in pedestals:
                 m2 = pedestals["p2"] != 0
                 frame += (
-                    (gain == 3) * (numpy.bitwise_and(raw, 0x3FFF)) * m2
-                    - pedestals["p2"]
+                    (gain == 3)
+                    * ((numpy.bitwise_and(raw, 0x3FFF)) * m2 - pedestals["p2"])
                 ) / (g012[2] * energy)
             d[j] = embiggen(numpy.around(frame))
 
