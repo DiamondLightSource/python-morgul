@@ -7,6 +7,7 @@ import os
 
 import h5py
 import numpy
+import tqdm
 
 hostname = os.uname()[1]
 if "diamond.ac.uk" in hostname:
@@ -62,7 +63,7 @@ def average_pedestal(gain_mode, filename):
         image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
         mask = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
 
-        for j in range(s[0]):
+        for j in tqdm.tqdm(range(s[0])):
             i = d[j]
             gain = numpy.right_shift(i, 14)
             valid = gain == gain_mode
@@ -75,6 +76,31 @@ def average_pedestal(gain_mode, filename):
         mask[mask == 0] = 1
 
         return image / mask
+
+
+def mask(filename):
+    """Use the data given in filename to derive a trusted pixel mask"""
+
+    image = numpy.zeros(shape=(514, 1030), dtype=numpy.float64)
+    square = numpy.zeros(shape=(514, 1030), dtype=numpy.float64)
+
+    with h5py.File(filename) as f:
+        try:
+            assert f["gainmode"][()] == "dynamic"
+        except KeyError:
+            pass
+
+        d = f["data"]
+
+        # compute sum, sum of squares down stack
+        for j in tqdm.tqdm(range(d.shape[0])):
+            image += d[j].astype(numpy.float64)
+            square += numpy.square(d[j].astype(numpy.float64))
+        mean = image / d.shape[0]
+        var = square / d.shape[0] - numpy.square(mean)
+        mean[mean == 0] = 1
+        disp = var / mean
+        return disp > 3
 
 
 def main():
@@ -95,6 +121,9 @@ def main():
     parser.add_argument(
         "-2", "--pedestal-2", dest="p2", help="pedestal run at gain mode 2"
     )
+    parser.add_argument(
+        "-f", "--flat", dest="f", help="flat field data to use for mask"
+    )
     args = parser.parse_args()
 
     assert args.detector
@@ -113,6 +142,9 @@ def main():
         if args.p2:
             p2 = average_pedestal(3, args.p2)
             f.create_dataset("p2", data=p2)
+        if args.f:
+            m = mask(args.f)
+            f.create_dataset("mask", data=m)
 
 
 if __name__ == "__main__":
