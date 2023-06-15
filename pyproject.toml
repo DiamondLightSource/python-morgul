@@ -7,6 +7,7 @@ authors = [
     "Graeme Winter <graeme.winter@gmail.com>",
 ]
 readme = "README.md"
+license = "BSD-3-Clause"
 packages = [{include = "morgul"}]
 
 [tool.poetry.dependencies]
