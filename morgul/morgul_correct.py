@@ -46,6 +46,10 @@ def embiggen(packed):
     return bigger
 
 
+def correct() -> None:
+    pass
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Correction program for Jungfrau",

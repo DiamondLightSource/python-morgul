@@ -1,29 +1,15 @@
-from __future__ import annotations
-
-import argparse
-import sys
 from pathlib import Path
+from typing import Annotated, Optional
 
 import h5py
 import numpy
 import tqdm
-
-from .config import get_known_detectors, psi_gain_maps
+import typer
+from click.exceptions import UsageError
 
 BOLD = "\033[1m"
 R = "\033[31m"
 NC = "\033[0m"
-
-
-def init(detector: str) -> None:
-    maps = psi_gain_maps(detector)
-
-    with h5py.File(f"{detector}_calib.h5", "w") as f:
-        for k in sorted(maps):
-            g = f.create_group(k)
-            g012 = maps[k]
-            for j in 0, 1, 2:
-                g.create_dataset(f"g{j}", data=g012[j])
 
 
 def average_pedestal(gain_mode, filename):
@@ -79,87 +65,69 @@ def mask(filename):
         return (disp > 3).astype(numpy.uint32)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Calibration setup for Jungfrau",
-    )
-    parser.add_argument(
-        "detector",
-        choices=get_known_detectors(),
-        help="Which detector to run calibration preparations for.",
-    )
-    parser.add_argument(
-        "-i",
-        "--init",
-        action="store_true",
-        help="Create initial files. If specified, must specify other file-based flags.",
-    )
-    parser.add_argument(
-        "-0",
-        "--pedestal-0",
-        dest="p0",
-        help="Data file for pedestal run at gain mode 0",
-        type=Path,
-    )
-    parser.add_argument(
-        "-1",
-        "--pedestal-1",
-        dest="p1",
-        help="Data file for pedestal run at gain mode 1",
-        type=Path,
-    )
-    parser.add_argument(
-        "-2",
-        "--pedestal-2",
-        dest="p2",
-        help="Data file for pedestal run at gain mode 2",
-        type=Path,
-    )
-    parser.add_argument(
-        "-f",
-        "--flat",
-        dest="f",
-        help="Data file of flat field data, to use for mask calculation",
-        type=Path,
-    )
-    parser.add_argument(
-        "-o",
-        dest="output",
-        help="Name for the output HDF5 file. Default: <detector>_pedestal.h5",
-        metavar="OUTPUT.h5",
-        type=Path,
-    )
-    args = parser.parse_args()
+def prepare(
+    detector: Annotated[
+        str, typer.Argument(help="Which detector to run calibration preparations for")
+    ],
+    p0: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-0", "--pedestal-0", help="Data file for pedestal run at gain mode 0"
+        ),
+    ] = None,
+    p1: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-1", "--pedestal-1", help="Data file for pedestal run at gain mode 1"
+        ),
+    ] = None,
+    p2: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-2", "--pedestal-2", help="Data file for pedestal run at gain mode 2"
+        ),
+    ] = None,
+    flat: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-f",
+            "--flat",
+            help="File containing flat-field data, to use for mask calculation",
+        ),
+    ] = None,
+    output: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-o",
+            "--output",
+            help="Name for the output HDF5 file. Default: <detector>_pedestal.h5",
+        ),
+    ] = None,
+):
+    """
+    Calibration setup for Jungfrau
+    """
+    if not (p0 or p1 or p2):
+        raise UsageError("Must specify one of the gain modes")
 
-    # Ensure we must request one or the other
-    has_source_files = args.p0 or args.p1 or args.p2 or args.f
-    if args.init and has_source_files:
-        sys.exit(
-            f"{R}Error: Cannot specify pedestal/flatfield run and initial file runs at the same time.{NC}"
-        )
-    elif not args.init and not has_source_files:
-        # The user neither provided source files nor requested init
-        parser.print_help()
-        sys.exit(1)
-
-    if args.init:
-        init(args.detector)
-        return
-
-    args.output = args.output or Path(f"{args.detector}_pedestal.h5")
-    with h5py.File(args.output, "w") as f:
-        if args.p0:
-            p0 = average_pedestal(0, args.p0)
+    output = output or Path(f"{detector}_pedestal.h5")
+    with h5py.File(output, "w") as f:
+        if p0:
+            p0 = average_pedestal(0, p0)
             f.create_dataset("p0", data=p0)
-        if args.p1:
-            p1 = average_pedestal(1, args.p1)
+        if p1:
+            p1 = average_pedestal(1, p1)
             f.create_dataset("p1", data=p1)
-        if args.p2:
-            p2 = average_pedestal(3, args.p2)
+        if p2:
+            p2 = average_pedestal(3, p2)
             f.create_dataset("p2", data=p2)
-        if args.f:
-            m = mask(args.f)
+        if f:
+            m = mask(f)
             f.create_dataset("mask", data=m)
+
+
+def main() -> None:
+    typer.run(prepare)
 
 
 if __name__ == "__main__":

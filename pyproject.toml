@@ -17,10 +17,12 @@ numpy = "^1.24.3"
 h5py = "^3.8.0"
 tqdm = "^4.65.0"
 hdf5plugin = "^4.1.2"
+typer = "^0.9.0"
 
 [tool.poetry.scripts]
 morgul-prepare = "morgul.morgul_prepare:main"
 morgul-correct = "morgul.morgul_correct:main"
+morgul = "morgul.morgul:main"
 
 [build-system]
 requires = ["poetry-core"]
@@ -31,5 +33,3 @@ ignore = ["E501", "E741"]
 line-length = 88
 select = ["C9", "E", "F", "W", "I"]
 
-[tool.ruff.isort]
-required-imports = ["from __future__ import annotations"]
