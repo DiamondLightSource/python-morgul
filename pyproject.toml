@@ -18,8 +18,8 @@ tqdm = "^4.65.0"
 hdf5plugin = "^4.1.2"
 
 [tool.poetry.scripts]
-morgul.apply = "morgul.morgul_apply:main"
-morgul.setup = "morgul.morgul_setup:main"
+morgul-apply = "morgul.morgul_apply:main"
+morgul-setup = "morgul.morgul_setup:main"
 
 [build-system]
 requires = ["poetry-core"]
