@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import sys
 
-import numpy
 import h5py
-
+import numpy
 from matplotlib import pyplot
+
 
 def main(datafile, gainfile, outputfile):
     data = h5py.File(datafile, "r")
     gain = numpy.fromfile(open(gainfile, "r"), dtype=numpy.float64, count=-1).reshape(
         6, 512, 1024
     )
-    output = h5py.File(outputfile, "w")
+    h5py.File(outputfile, "w")
 
     raw = data["data"]
 
@@ -65,6 +67,7 @@ def main(datafile, gainfile, outputfile):
     pyplot.imshow(stddev * mask, vmin=0, vmax=1)
     pyplot.colorbar()
     pyplot.show()
+
 
 if __name__ == "__main__":
     main(*sys.argv[1:])

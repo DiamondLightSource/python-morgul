@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "morgul"
+version = "0.1.0"
+description = ""
+authors = [
+    "Nicholas Devenish <ndevenish@gmail.com>",
+    "Graeme Winter <graeme.winter@gmail.com>",
+]
+readme = "README.md"
+packages = [{include = "morgul"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.24.3"
+h5py = "^3.8.0"
+tqdm = "^4.65.0"
+hdf5plugin = "^4.1.2"
+
+[tool.poetry.scripts]
+morgul = "morgul.morgul:main"
+morannon = "morgul.morannon:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+ignore = ["E501", "E741"]
+line-length = 88
+select = ["C9", "E", "F", "W", "I"]
+
+[tool.ruff.isort]
+required-imports = ["from __future__ import annotations"]

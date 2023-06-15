@@ -1,13 +1,13 @@
+from __future__ import annotations
+
 import argparse
 import configparser
 import glob
 import os
 
-import numpy
 import h5py
-
 import hdf5plugin
-
+import numpy
 import tqdm
 
 hostname = os.uname()[1]

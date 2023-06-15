@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 import sys
 
-import numpy
-from matplotlib import pyplot
-
 import h5py
-import hdf5plugin
-
+import numpy
 import tqdm
+from matplotlib import pyplot
 
 image = numpy.zeros(shape=(514, 1030), dtype=numpy.float64)
 square = numpy.zeros(shape=(514, 1030), dtype=numpy.float64)

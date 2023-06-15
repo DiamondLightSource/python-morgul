@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 import argparse
 import configparser
 import glob
 import os
-import sys
 
-import numpy
 import h5py
+import numpy
 
 hostname = os.uname()[1]
 if "diamond.ac.uk" in hostname:
@@ -55,7 +56,6 @@ def init(detector):
 
 
 def average_pedestal(gain_mode, filename):
-
     with h5py.File(filename) as f:
         d = f["data"]
         s = d.shape
@@ -106,13 +106,13 @@ def main():
     with h5py.File(f"{args.detector}_pedestal.h5", "w") as f:
         if args.p0:
             p0 = average_pedestal(0, args.p0)
-            f.create_dataset(f"p0", data=p0)
+            f.create_dataset("p0", data=p0)
         if args.p1:
             p1 = average_pedestal(1, args.p1)
-            f.create_dataset(f"p1", data=p1)
+            f.create_dataset("p1", data=p1)
         if args.p2:
             p2 = average_pedestal(3, args.p2)
-            f.create_dataset(f"p2", data=p2)
+            f.create_dataset("p2", data=p2)
 
 
 if __name__ == "__main__":
