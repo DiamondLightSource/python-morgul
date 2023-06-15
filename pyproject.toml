@@ -9,6 +9,7 @@ authors = [
 readme = "README.md"
 license = "BSD-3-Clause"
 packages = [{include = "morgul"}]
+include = ["morgul/morgul.ini"]
 
 [tool.poetry.dependencies]
 python = "^3.11"

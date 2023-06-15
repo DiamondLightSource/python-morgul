@@ -1,46 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import configparser
-import glob
-import os
 
 import h5py
 import numpy
 import tqdm
 
-hostname = os.uname()[1]
-if "diamond.ac.uk" in hostname:
-    hostname = "xxx.diamond.ac.uk"
-install = os.path.dirname(os.path.realpath(__file__))
-
-
-def get_config():
-    """Get the local configuration from the installation directory"""
-    configuration = configparser.ConfigParser()
-    assert "morgul.ini" in configuration.read(os.path.join(install, "morgul.ini"))[0]
-    return configuration
-
-
-config = get_config()
-
-
-def psi_gain_maps(detector):
-    """Read gain maps from installed location, return as 3 x numpy array g0, g1, g2"""
-    calib = config[hostname]["calibration"]
-    result = {}
-    for k in config.keys():
-        if k.startswith(detector):
-            module = config[k]["module"]
-            gain_file = glob.glob(os.path.join(calib, f"M{module}_fullspeed", "*.bin"))
-            assert len(gain_file) == 1
-            shape = 3, 512, 1024
-            count = shape[0] * shape[1] * shape[2]
-            gains = numpy.fromfile(
-                open(gain_file[0], "r"), dtype=numpy.float64, count=count
-            ).reshape(*shape)
-            result[f"M{module}"] = gains
-    return result
+from .config import psi_gain_maps
 
 
 def init(detector):
