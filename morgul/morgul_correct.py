@@ -78,7 +78,6 @@ def embiggen(packed):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="morgul-apply",
         description="Correction program for Jungfrau",
     )
     parser.add_argument("detector")

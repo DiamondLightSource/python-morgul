@@ -105,7 +105,6 @@ def mask(filename):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="morgul-setup",
         description="Calibration setup for Jungfrau",
     )
     parser.add_argument("detector")
