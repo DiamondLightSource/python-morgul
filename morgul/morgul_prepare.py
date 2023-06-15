@@ -79,6 +79,10 @@ def average_pedestal(gain_mode, filename):
 def mask(filename):
     """Use the data given in filename to derive a trusted pixel mask"""
 
+    # THIS IS WRONG at the moment as it needs to work on corrected data
+    # at this point the data *are not* corrected so this needs to also
+    # encode the correction procedure
+
     with h5py.File(filename) as f:
         s = f["data"].shape
 
