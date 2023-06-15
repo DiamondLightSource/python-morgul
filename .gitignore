@@ -4,6 +4,7 @@ a.out
 
 # object files
 *.o
+*.a
 
 # environment
 ENV/*
@@ -13,3 +14,5 @@ ENV/*
 *.dat
 *.raw
 
+# Python
+__pycache__/
