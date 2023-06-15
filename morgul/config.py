@@ -64,3 +64,15 @@ def psi_gain_maps(detector: str) -> dict[str, numpy.typing.NDArray[numpy.float64
             ).reshape(*shape)
             result[f"M{module}"] = gains
     return result
+
+
+def get_known_detectors() -> set[str]:
+    """Get a list of known detectors from the configuration"""
+    # Since we don't have a literal detector list, learn by inspection.
+    # We expect every detector listed:
+    # - To have modules sections named "<detname>-<module>"
+    # - For each module to have at least a "module" key
+    config = get_config()
+    modules = [x for x in config if "module" in config[x]]
+    # Now, make a set of everything before the last -
+    return {module.rpartition("-")[0] for module in modules}

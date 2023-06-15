@@ -6,10 +6,10 @@ import h5py
 import numpy
 import tqdm
 
-from .config import psi_gain_maps
+from .config import get_known_detectors, psi_gain_maps
 
 
-def init(detector):
+def init(detector: str) -> None:
     maps = psi_gain_maps(detector)
 
     with h5py.File(f"{detector}_calib.h5", "w") as f:
@@ -73,11 +73,15 @@ def mask(filename):
         return (disp > 3).astype(numpy.uint32)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Calibration setup for Jungfrau",
     )
-    parser.add_argument("detector")
+    parser.add_argument(
+        "detector",
+        choices=get_known_detectors(),
+        help="Which detector to run calibration preparations for.",
+    )
     parser.add_argument(
         "-i", "--init", action="store_true", help="create initial files"
     )
@@ -94,8 +98,6 @@ def main():
         "-f", "--flat", dest="f", help="flat field data to use for mask"
     )
     args = parser.parse_args()
-
-    assert args.detector
 
     if args.init:
         init(args.detector)
