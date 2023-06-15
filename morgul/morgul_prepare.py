@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from pathlib import Path
 
 import h5py
 import numpy
 import tqdm
 
 from .config import get_known_detectors, psi_gain_maps
+
+BOLD = "\033[1m"
+R = "\033[31m"
+NC = "\033[0m"
 
 
 def init(detector: str) -> None:
@@ -83,27 +89,65 @@ def main() -> None:
         help="Which detector to run calibration preparations for.",
     )
     parser.add_argument(
-        "-i", "--init", action="store_true", help="create initial files"
+        "-i",
+        "--init",
+        action="store_true",
+        help="Create initial files. If specified, must specify other file-based flags.",
     )
     parser.add_argument(
-        "-0", "--pedestal-0", dest="p0", help="pedestal run at gain mode 0"
+        "-0",
+        "--pedestal-0",
+        dest="p0",
+        help="Data file for pedestal run at gain mode 0",
+        type=Path,
     )
     parser.add_argument(
-        "-1", "--pedestal-1", dest="p1", help="pedestal run at gain mode 1"
+        "-1",
+        "--pedestal-1",
+        dest="p1",
+        help="Data file for pedestal run at gain mode 1",
+        type=Path,
     )
     parser.add_argument(
-        "-2", "--pedestal-2", dest="p2", help="pedestal run at gain mode 2"
+        "-2",
+        "--pedestal-2",
+        dest="p2",
+        help="Data file for pedestal run at gain mode 2",
+        type=Path,
     )
     parser.add_argument(
-        "-f", "--flat", dest="f", help="flat field data to use for mask"
+        "-f",
+        "--flat",
+        dest="f",
+        help="Data file of flat field data, to use for mask calculation",
+        type=Path,
+    )
+    parser.add_argument(
+        "-o",
+        dest="output",
+        help="Name for the output HDF5 file. Default: <detector>_pedestal.h5",
+        metavar="OUTPUT.h5",
+        type=Path,
     )
     args = parser.parse_args()
+
+    # Ensure we must request one or the other
+    has_source_files = args.p0 or args.p1 or args.p2 or args.f
+    if args.init and has_source_files:
+        sys.exit(
+            f"{R}Error: Cannot specify pedestal/flatfield run and initial file runs at the same time.{NC}"
+        )
+    elif not args.init and not has_source_files:
+        # The user neither provided source files nor requested init
+        parser.print_help()
+        sys.exit(1)
 
     if args.init:
         init(args.detector)
         return
 
-    with h5py.File(f"{args.detector}_pedestal.h5", "w") as f:
+    args.output = args.output or Path(f"{args.detector}_pedestal.h5")
+    with h5py.File(args.output, "w") as f:
         if args.p0:
             p0 = average_pedestal(0, args.p0)
             f.create_dataset("p0", data=p0)
