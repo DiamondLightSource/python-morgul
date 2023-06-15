@@ -46,6 +46,27 @@ def embiggen(packed):
     return bigger
 
 
+def correct_frame(raw, pedestals, g012, energy):
+    """Correct pixel values to photons in frame"""
+
+    gain = numpy.right_shift(raw, 14)
+    m0 = pedestals["p0"] != 0
+    frame = ((gain == 0) * (numpy.bitwise_and(raw, 0x3FFF)) * m0 - pedestals["p0"]) / (
+        g012[0] * energy
+    )
+    if "p1" in pedestals:
+        m1 = pedestals["p1"] != 0
+        frame += (
+            (gain == 1) * ((numpy.bitwise_and(raw, 0x3FFF)) * m1 - pedestals["p1"])
+        ) / (g012[1] * energy)
+    if "p2" in pedestals:
+        m2 = pedestals["p2"] != 0
+        frame += (
+            (gain == 3) * ((numpy.bitwise_and(raw, 0x3FFF)) * m2 - pedestals["p2"])
+        ) / (g012[2] * energy)
+    return frame
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Correction program for Jungfrau",
@@ -91,23 +112,7 @@ def main():
         )
         for j in tqdm.tqdm(range(s[0])):
             raw = r[j]
-            gain = numpy.right_shift(raw, 14)
-            m0 = pedestals["p0"] != 0
-            frame = (
-                (gain == 0) * (numpy.bitwise_and(raw, 0x3FFF)) * m0 - pedestals["p0"]
-            ) / (g012[0] * energy)
-            if "p1" in pedestals:
-                m1 = pedestals["p1"] != 0
-                frame += (
-                    (gain == 1)
-                    * ((numpy.bitwise_and(raw, 0x3FFF)) * m1 - pedestals["p1"])
-                ) / (g012[1] * energy)
-            if "p2" in pedestals:
-                m2 = pedestals["p2"] != 0
-                frame += (
-                    (gain == 3)
-                    * ((numpy.bitwise_and(raw, 0x3FFF)) * m2 - pedestals["p2"])
-                ) / (g012[2] * energy)
+            frame = correct_frame(raw, pedestals, g012, energy)
             d[j] = embiggen(numpy.around(frame))
 
 

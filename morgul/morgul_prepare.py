@@ -42,7 +42,7 @@ def average_pedestal(gain_mode, filename):
         return image / mask
 
 
-def mask(filename):
+def mask(filename, pedestals):
     """Use the data given in filename to derive a trusted pixel mask"""
 
     # THIS IS WRONG at the moment as it needs to work on corrected data
@@ -102,17 +102,22 @@ def main():
         return
 
     with h5py.File(f"{args.detector}_pedestal.h5", "w") as f:
+        pedestals = {}
         if args.p0:
             p0 = average_pedestal(0, args.p0)
+            pedestals["p0"] = p0
             f.create_dataset("p0", data=p0)
         if args.p1:
             p1 = average_pedestal(1, args.p1)
+            pedestals["p1"] = p1
             f.create_dataset("p1", data=p1)
         if args.p2:
             p2 = average_pedestal(3, args.p2)
+            pedestals["p2"] = p2
             f.create_dataset("p2", data=p2)
         if args.f:
-            m = mask(args.f)
+            assert "p0" in pedestals
+            m = mask(args.f, pedestals)
             f.create_dataset("mask", data=m)
 
 
