@@ -18,9 +18,7 @@ install = os.path.dirname(os.path.realpath(__file__))
 def get_config():
     """Get the local configuration from the installation directory"""
     configuration = configparser.ConfigParser()
-    assert (
-        "morannon.ini" in configuration.read(os.path.join(install, "morannon.ini"))[0]
-    )
+    assert "morgul.ini" in configuration.read(os.path.join(install, "morgul.ini"))[0]
     return configuration
 
 
@@ -81,10 +79,12 @@ def average_pedestal(gain_mode, filename):
 def mask(filename):
     """Use the data given in filename to derive a trusted pixel mask"""
 
-    image = numpy.zeros(shape=(514, 1030), dtype=numpy.float64)
-    square = numpy.zeros(shape=(514, 1030), dtype=numpy.float64)
-
     with h5py.File(filename) as f:
+        s = f["data"].shape
+
+        image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
+        square = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
+
         try:
             assert f["gainmode"][()] == "dynamic"
         except KeyError:
@@ -105,7 +105,7 @@ def mask(filename):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="morannon",
+        prog="morgul-setup",
         description="Calibration setup for Jungfrau",
     )
     parser.add_argument("detector")
