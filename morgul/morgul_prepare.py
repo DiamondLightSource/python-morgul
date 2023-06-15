@@ -100,7 +100,7 @@ def mask(filename):
         var = square / d.shape[0] - numpy.square(mean)
         mean[mean == 0] = 1
         disp = var / mean
-        return (disp < 3).astype(numpy.uint32)
+        return (disp > 3).astype(numpy.uint32)
 
 
 def main():
