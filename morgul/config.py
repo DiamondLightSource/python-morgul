@@ -52,17 +52,21 @@ def psi_gain_maps(detector: str) -> dict[str, numpy.typing.NDArray[numpy.float64
     config = get_config()
     calib = get_calibration_path()
     result = {}
-    for k in config.keys():
-        if k.startswith(detector):
-            module = config[k]["module"]
-            gain_file = list(calib.joinpath(f"M{module}_fullspeed").glob("*.bin"))
-            assert len(gain_file) == 1
-            shape = 3, 512, 1024
-            count = shape[0] * shape[1] * shape[2]
-            gains = numpy.fromfile(
-                open(gain_file[0], "r"), dtype=numpy.float64, count=count
-            ).reshape(*shape)
-            result[f"M{module}"] = gains
+    modules = [x for x in config.keys() if x.startswith(detector)]
+    for k in modules:
+        module = config[k]["module"]
+        gain_file = list(calib.joinpath(f"M{module}_fullspeed").glob("*.bin"))
+        assert len(gain_file) == 1
+        shape = 3, 512, 1024
+        count = shape[0] * shape[1] * shape[2]
+        gains = numpy.fromfile(
+            open(gain_file[0], "r"), dtype=numpy.float64, count=count
+        ).reshape(*shape)
+        result[f"M{module}"] = gains
+
+    if not result:
+        raise RuntimeError(f"Got no gain map results for detector {detector}")
+
     return result
 
 
