@@ -15,17 +15,6 @@ R = "\033[31m"
 NC = "\033[0m"
 
 
-def init(detector):
-    maps = psi_gain_maps(detector)
-
-    with h5py.File(f"{detector}_calib.h5", "w") as f:
-        for k in sorted(maps):
-            g = f.create_group(k)
-            g012 = maps[k]
-            for j in 0, 1, 2:
-                g.create_dataset(f"g{j}", data=g012[j])
-
-
 def average_pedestal(gain_mode, filename):
     with h5py.File(filename) as f:
         d = f["data"]
