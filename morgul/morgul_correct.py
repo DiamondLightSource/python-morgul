@@ -1,6 +1,4 @@
-import argparse
 import logging
-import os
 from pathlib import Path
 from typing import Annotated
 
@@ -46,22 +44,6 @@ def embiggen(packed):
 
     return bigger
 
-    # parser = argparse.ArgumentParser(
-    #     description="Correction program for Jungfrau",
-    # )
-    # parser.add_argument("detector")
-    # parser.add_argument(
-    #     "-m", "--module", dest="module", help="module data taken from i.e. 0, 1, ..."
-    # )
-    # parser.add_argument(
-    #     "-p", "--pedestal", dest="pedestal", help="pedestal data from this module"
-    # )
-    # parser.add_argument(
-    #     "-d", "--data", dest="data", help="data to correct from this module"
-    # )
-    # parser.add_argument("-e", "--energy", dest="energy", help="photon energy (keV)")
-    # args = parser.parse_args()
-
 
 def correct(
     detector: Annotated[
@@ -81,43 +63,20 @@ def correct(
         float, typer.Option("-e", "--energy", help="photon energy (keV)")
     ],
 ):
-    pass
+    """Correction program for Jungfrau"""
 
+    pedestals = get_pedestals(pedestal)
+    maps = psi_gain_maps(detector)
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Correction program for Jungfrau",
-    )
-    parser.add_argument("detector")
-    parser.add_argument(
-        "-m", "--module", dest="module", help="module data taken from i.e. 0, 1, ..."
-    )
-    parser.add_argument(
-        "-p", "--pedestal", dest="pedestal", help="pedestal data from this module"
-    )
-    parser.add_argument(
-        "-d", "--data", dest="data", help="data to correct from this module"
-    )
-    parser.add_argument("-e", "--energy", dest="energy", help="photon energy (keV)")
-    args = parser.parse_args()
+    g012 = maps[module]
 
-    assert args.detector
-    assert args.energy
+    output = data.parent / f"{data.stem}_corrected{data.suffix}"
 
-    energy = float(args.energy)
-
-    pedestals = get_pedestals(args.pedestal)
-    maps = psi_gain_maps(args.detector)
-
-    g012 = maps[args.module]
-
-    output = args.data.replace(".h5", "_corrected.h5")
-
-    assert not os.path.exists(output)
+    assert not output.exists()
 
     # FIXME need to add the embiggen code
 
-    with h5py.File(args.data, "r") as i, h5py.File(output, "w") as f:
+    with h5py.File(data, "r") as i, h5py.File(output, "w") as f:
         r = i["data"]
         s = r.shape
         d = f.create_dataset(
@@ -147,6 +106,10 @@ def main():
                     * ((numpy.bitwise_and(raw, 0x3FFF)) * m2 - pedestals["p2"])
                 ) / (g012[2] * energy)
             d[j] = embiggen(numpy.around(frame))
+
+
+def main() -> None:
+    typer.run(correct)
 
 
 if __name__ == "__main__":
