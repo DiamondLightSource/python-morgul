@@ -22,7 +22,7 @@ def average_pedestal(gain_mode, filename):
         image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
         mask = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
 
-        for j in tqdm.tqdm(range(s[0])):
+        for j in tqdm.tqdm(range(s[0]), desc=f"Gain Mode {gain_mode}"):
             i = d[j]
             gain = numpy.right_shift(i, 14)
             valid = gain == gain_mode
@@ -56,7 +56,7 @@ def mask(filename, pedestals, gain_maps, energy):
         d = f["data"]
 
         # compute sum, sum of squares down stack
-        for j in tqdm.tqdm(range(d.shape[0])):
+        for j in tqdm.tqdm(range(d.shape[0]), desc="Mask"):
             frame = correct_frame(d[j], pedestals, gain_maps, energy)
             image += frame
             square += numpy.square(frame)
