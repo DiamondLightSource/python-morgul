@@ -111,11 +111,3 @@ def correct(
             raw = r[j]
             frame = correct_frame(raw, pedestals, g012, energy)
             d[j] = embiggen(numpy.around(frame))
-
-
-def main() -> None:
-    typer.run(correct)
-
-
-if __name__ == "__main__":
-    main()

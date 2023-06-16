@@ -144,11 +144,3 @@ def prepare(
             maps = gain_maps[module]
             m = mask(flat, pedestals, maps, energy)
             f.create_dataset("mask", data=m)
-
-
-def main() -> None:
-    typer.run(prepare)
-
-
-if __name__ == "__main__":
-    main()
