@@ -1,13 +1,13 @@
-from __future__ import annotations
-
 import argparse
 import logging
 import os
+from pathlib import Path
 
 import h5py
 import hdf5plugin
 import numpy
 import tqdm
+import typer
 
 from .config import psi_gain_maps
 
@@ -45,8 +45,38 @@ def embiggen(packed):
 
     return bigger
 
+    # parser = argparse.ArgumentParser(
+    #     description="Correction program for Jungfrau",
+    # )
+    # parser.add_argument("detector")
+    # parser.add_argument(
+    #     "-m", "--module", dest="module", help="module data taken from i.e. 0, 1, ..."
+    # )
+    # parser.add_argument(
+    #     "-p", "--pedestal", dest="pedestal", help="pedestal data from this module"
+    # )
+    # parser.add_argument(
+    #     "-d", "--data", dest="data", help="data to correct from this module"
+    # )
+    # parser.add_argument("-e", "--energy", dest="energy", help="photon energy (keV)")
+    # args = parser.parse_args()
 
-def correct() -> None:
+
+def correct(
+    detector: str = typer.Argument(
+        help="Which detector to run calibration preparations for"
+    ),
+    module: str = typer.Option(
+        ..., "-m", "--module", help="module data taken from i.e. 0, 1, ..."
+    ),
+    pedestal: Path = typer.Option(
+        ..., "-p", "--pedestal", help="pedestal data from this module"
+    ),
+    data: Path = typer.Option(
+        ..., "-d", "--data", help="data to correct from this module"
+    ),
+    energy: float = typer.Option(..., "-e", "--energy", help="photon energy (keV)"),
+):
     pass
 
 
