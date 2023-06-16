@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 from pathlib import Path
+from typing import Annotated
 
 import h5py
 import hdf5plugin
@@ -63,19 +64,22 @@ def embiggen(packed):
 
 
 def correct(
-    detector: str = typer.Argument(
-        help="Which detector to run calibration preparations for"
-    ),
-    module: str = typer.Option(
-        ..., "-m", "--module", help="module data taken from i.e. 0, 1, ..."
-    ),
-    pedestal: Path = typer.Option(
-        ..., "-p", "--pedestal", help="pedestal data from this module"
-    ),
-    data: Path = typer.Option(
-        ..., "-d", "--data", help="data to correct from this module"
-    ),
-    energy: float = typer.Option(..., "-e", "--energy", help="photon energy (keV)"),
+    detector: Annotated[
+        str, typer.Argument(help="Which detector to run calibration preparations for")
+    ],
+    module: Annotated[
+        str,
+        typer.Option("-m", "--module", help="module data taken from i.e. 0, 1, ..."),
+    ],
+    pedestal: Annotated[
+        Path, typer.Option("-p", "--pedestal", help="pedestal data from this module")
+    ],
+    data: Annotated[
+        Path, typer.Option("-d", "--data", help="data to correct from this module")
+    ],
+    energy: Annotated[
+        float, typer.Option("-e", "--energy", help="photon energy (keV)")
+    ],
 ):
     pass
 
