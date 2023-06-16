@@ -4,9 +4,15 @@ a.out
 
 # object files
 *.o
+*.a
 
 # environment
 ENV/*
 
 # data files
 *.h5
+*.dat
+*.raw
+
+# Python
+__pycache__/
