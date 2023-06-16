@@ -141,7 +141,7 @@ def prepare(
 
             config = get_config()
             module = config[f"{detector}-{c}{r}"]["module"]
-            maps = gain_maps[f"M{module}"]
+            maps = gain_maps[module]
             m = mask(flat, pedestals, maps, energy)
             f.create_dataset("mask", data=m)
 
