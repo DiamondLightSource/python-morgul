@@ -20,8 +20,6 @@ hdf5plugin = "^4.1.2"
 typer = "^0.9.0"
 
 [tool.poetry.scripts]
-morgul-prepare = "morgul.morgul_prepare:main"
-morgul-correct = "morgul.morgul_correct:main"
 morgul = "morgul.morgul:main"
 
 [build-system]
