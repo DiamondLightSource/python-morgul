@@ -68,7 +68,7 @@ def mask(filename, pedestals, gain_maps, energy):
         return (disp > 3).astype(numpy.uint32)
 
 
-def prepare(
+def pedestal(
     detector: Annotated[
         str, typer.Argument(help="Which detector to run calibration preparations for")
     ],

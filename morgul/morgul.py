@@ -1,6 +1,6 @@
 import typer
 
-from . import morgul_correct, morgul_gainmap, morgul_prepare
+from . import morgul_correct, morgul_gainmap, morgul_mask, morgul_pedestal
 
 
 class NaturalOrderGroup(typer.core.TyperGroup):
@@ -16,7 +16,8 @@ app = typer.Typer(
 )
 
 app.command()(morgul_gainmap.gainmap)
-app.command()(morgul_prepare.prepare)
+app.command()(morgul_mask.mask)
+app.command()(morgul_pedestal.pedestal)
 app.command()(morgul_correct.correct)
 
 
