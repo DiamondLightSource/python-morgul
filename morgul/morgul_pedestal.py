@@ -26,7 +26,7 @@ def average_pedestal(
 ):
     s = dataset.shape
     image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
-    mask = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
+    n_obs = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
 
     for j in tqdm.tqdm(
         range(s[0]), desc=progress_title or f"Gain Mode {gain_mode}", leave=False
@@ -35,17 +35,16 @@ def average_pedestal(
         gain = numpy.right_shift(i, 14)
         valid = gain == gain_mode
         i *= valid
-        mask += valid
+        n_obs += valid
         image += i
 
         if parent_progress:
             parent_progress.update(1)
 
     # cope with zero valid observations
+    n_obs[n_obs == 0] = 1
 
-    mask[mask == 0] = 1
-
-    return image / mask
+    return image / n_obs
 
 
 class PedestalData(NamedTuple):
