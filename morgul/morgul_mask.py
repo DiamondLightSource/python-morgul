@@ -41,20 +41,31 @@ def _calculate(filename, pedestals, gain_maps, energy):
 
 
 def mask(
+    pedestal: Annotated[
+        Path,
+        typer.Argument(
+            help="Pedestal data file for the module(s), from 'morgul pedestal'. Used when correcting in order to calculate the mask."
+        ),
+    ],
     flat: Annotated[
+        list[Path],
+        typer.Argument(
+            help="Flat-field data to use for mask generation. Multiple modules for a single time point can be passed, but must be present in the pedestal file."
+        ),
+    ],
+    energy: Annotated[
+        float, typer.Option("-e", "--energy", help="photon energy (keV)")
+    ],
+    output: Annotated[
         Optional[Path],
         typer.Option(
-            "-f",
-            "--flat",
-            help="File containing flat-field data, to use for mask calculation",
+            "-o",
+            help="Name for the output HDF5 file. Default: <detector>_<module>_<exptime>ms_mask.h5",
         ),
     ] = None,
-    # energy: Annotated[
-    #     float, typer.Option("-e", "--energy", help="photon energy (keV)")
-    # ],
 ):
     """Prepare a pixel mask from flatfield data"""
-    print(f"Running Mask on: {flat}")
+    print(f"Running generation for: {flat}")
     # assert "p0" in pedestals
     detector = get_detector()
     gain_maps = psi_gain_maps(detector)
