@@ -76,26 +76,23 @@ def pedestal(
     p1: Annotated[
         Optional[Path],
         typer.Option("-1", help="Data file for pedestal run at gain mode 1"),
-    ] = None,
+    ],
     p2: Annotated[
         Optional[Path],
         typer.Option("-2", help="Data file for pedestal run at gain mode 2"),
-    ] = None,
+    ],
     output: Annotated[
         Optional[Path],
         typer.Argument(
             help="Name for the output HDF5 file. Default: <detector>_pedestal.h5",
         ),
-    ] = None,
+    ],
 ):
     """
     Calibration setup for Jungfrau
     """
     detector = get_detector()
     print(f"Using detector: {BOLD}{detector}{NC}")
-
-    if not (p0 or p1 or p2):
-        raise UsageError("Must specify one of the gain modes")
 
     output = output or Path(f"{detector}_pedestal.h5")
     with h5py.File(output, "w") as f:
