@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 class Detector(enum.StrEnum):
     JF1MD = enum.auto()
-    JF4PSI = enum.auto()
+    JF4MPSI = enum.auto()
 
 
 _DETECTOR: Detector | None = None
@@ -59,6 +59,16 @@ def get_config():
     ) as fo:
         configuration.read(fo)
     return configuration
+
+
+def get_known_modules_for_detector(detector: Detector) -> list[str]:
+    """Get a list of known module IDs for a given detector"""
+    config = get_config()
+    return [
+        x["module"]
+        for k, x in config.items()
+        if k.lower().startswith(str(detector).lower() + "-")
+    ]
 
 
 def get_module_info(detector: Detector, col: int, row: int) -> dict[str, Any]:
