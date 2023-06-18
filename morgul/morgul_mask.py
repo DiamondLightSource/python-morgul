@@ -73,7 +73,7 @@ def mask(
     flat: Annotated[
         list[Path],
         typer.Argument(
-            help="Flat-field data to use for mask generation. Multiple modules for a single time point can be passed, but must be present in the pedestal file."
+            help="Flat-field data to use for mask generation. Multiple modules for a single exposure time can be passed, but must be present in the pedestal file."
         ),
     ],
     energy: Annotated[
