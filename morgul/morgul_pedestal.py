@@ -171,11 +171,29 @@ def pedestal(
                         progress_title=f" {data.module_serial_number} Gain {gain_mode}",
                     )
                     if data.module_serial_number not in f_output:
-                        f_output.create_group(data.module_serial_number)
+                        group = f_output.create_group(data.module_serial_number)
+                        if data.module_position is not None:
+                            group.attrs["position"] = data.module_position
+                        group.attrs["row"] = row
+                        group.attrs["col"] = col
+
                     group = f_output[data.module_serial_number]
-                    group.create_dataset(f"pedestal_{gain_mode}", data=pedestal)
+                    dataset = group.create_dataset(
+                        f"pedestal_{gain_mode}", data=pedestal
+                    )
+                    dataset.attrs["timestamp"] = int(data.timestamp.timestamp())
+                    dataset.attrs["filename"] = str(data.filename)
+
+        # Write extra metadata into the file
+        f_output.create_dataset("exptime", data=exposure_time)
+
+        elapsed_time = time.monotonic() - start_time
+        if elapsed_time > 60:
+            elapsed_time_str = (
+                f"{G}{elapsed_time//60:.0f}{NC}m {G}{elapsed_time%60:.0f}{NC}s"
+            )
+        else:
+            elapsed_time_str = f"{G}{elapsed_time:.1f}{NC}s"
 
         print()
-        logger.info(
-            f"Written output file {B}{output}{NC} in {G}{time.monotonic()-start_time:.1f}{NC} s."
-        )
+        logger.info(f"Written output file {B}{output}{NC} in {elapsed_time_str}.")
