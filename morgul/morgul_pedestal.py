@@ -173,7 +173,7 @@ def pedestal(
                     if data.module_serial_number not in f_output:
                         group = f_output.create_group(data.module_serial_number)
                         if data.module_position is not None:
-                            group.attrs["position"] = data.module_position
+                            group.attrs["position"] = data.module_position.strip("\"'")
                         group.attrs["row"] = row
                         group.attrs["col"] = col
 
