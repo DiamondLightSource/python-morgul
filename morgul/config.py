@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import configparser
+import enum
 import importlib.resources
 import logging
 import socket
@@ -10,10 +11,42 @@ from pathlib import Path
 import numpy
 import numpy.typing
 
+from .util import BOLD, NC, B
+
 logger = logging.getLogger(__name__)
 
-BOLD = "\033[1m"
-NC = "\033[1m"
+
+# def get_known_detectors() -> set[str]:
+#     """Get a list of known detectors from the configuration"""
+#     # Since we don't have a literal detector list, learn by inspection.
+#     # We expect every detector listed:
+#     # - To have modules sections named "<detname>-<module>"
+#     # - For each module to have at least a "module" key
+#     config = get_config()
+#     modules = [x for x in config if "module" in config[x]]
+#     # Now, make a set of everything before the last -
+#     return {module.rpartition("-")[0] for module in modules}
+
+# TODO: We used to dynamically generate this. This causes mypy issues,
+# so for now just hardcode the detectors (e.g. the one that we know we
+# are testing)
+# Dynamically create detector
+# enum Detector = enum.StrEnum("Detector", [x.upper() for x in get_known_detectors()])
+
+
+class Detector(enum.StrEnum):
+    JF1MD = enum.auto()
+    JF4PSI = enum.auto()
+
+
+_DETECTOR: Detector | None = None
+
+
+def get_detector() -> Detector:
+    """Get the currently selected detector"""
+    if _DETECTOR is None:
+        raise RuntimeError("Default detector not yet initialised")
+    return _DETECTOR
 
 
 @lru_cache
@@ -46,11 +79,12 @@ def get_calibration_path(hostname: str | None = None) -> Path:
         raise RuntimeError(f"Could not find calibration section: {e}")
 
 
-def psi_gain_maps(detector: str) -> dict[str, numpy.typing.NDArray[numpy.float64]]:
+@lru_cache
+def psi_gain_maps(detector: Detector) -> dict[str, numpy.typing.NDArray[numpy.float64]]:
     """Read gain maps from installed location, return as 3 x numpy array g0, g1, g2"""
-
     config = get_config()
     calib = get_calibration_path()
+    print(f"Reading gain maps from: {B}{calib}{NC}")
     result = {}
     modules = [x for x in config.keys() if x.startswith(detector)]
     for k in modules:
@@ -68,15 +102,3 @@ def psi_gain_maps(detector: str) -> dict[str, numpy.typing.NDArray[numpy.float64
         raise RuntimeError(f"Got no gain map results for detector {detector}")
 
     return result
-
-
-def get_known_detectors() -> set[str]:
-    """Get a list of known detectors from the configuration"""
-    # Since we don't have a literal detector list, learn by inspection.
-    # We expect every detector listed:
-    # - To have modules sections named "<detname>-<module>"
-    # - For each module to have at least a "module" key
-    config = get_config()
-    modules = [x for x in config if "module" in config[x]]
-    # Now, make a set of everything before the last -
-    return {module.rpartition("-")[0] for module in modules}

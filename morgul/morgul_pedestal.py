@@ -7,12 +7,9 @@ import tqdm
 import typer
 from click.exceptions import UsageError
 
-from .config import get_config, psi_gain_maps
+from .config import get_config, get_detector, psi_gain_maps
 from .morgul_correct import correct_frame
-
-BOLD = "\033[1m"
-R = "\033[31m"
-NC = "\033[0m"
+from .util import BOLD, NC
 
 
 def average_pedestal(gain_mode, filename):
@@ -69,43 +66,24 @@ def mask(filename, pedestals, gain_maps, energy):
 
 
 def pedestal(
-    detector: Annotated[
-        str, typer.Argument(help="Which detector to run calibration preparations for")
-    ],
     energy: Annotated[
         float, typer.Option("-e", "--energy", help="photon energy (keV)")
     ],
     p0: Annotated[
         Optional[Path],
-        typer.Option(
-            "-0", "--pedestal-0", help="Data file for pedestal run at gain mode 0"
-        ),
-    ] = None,
+        typer.Option("-0", help="Data file for pedestal run at gain mode 0"),
+    ],
     p1: Annotated[
         Optional[Path],
-        typer.Option(
-            "-1", "--pedestal-1", help="Data file for pedestal run at gain mode 1"
-        ),
+        typer.Option("-1", help="Data file for pedestal run at gain mode 1"),
     ] = None,
     p2: Annotated[
         Optional[Path],
-        typer.Option(
-            "-2", "--pedestal-2", help="Data file for pedestal run at gain mode 2"
-        ),
-    ] = None,
-    flat: Annotated[
-        Optional[Path],
-        typer.Option(
-            "-f",
-            "--flat",
-            help="File containing flat-field data, to use for mask calculation",
-        ),
+        typer.Option("-2", help="Data file for pedestal run at gain mode 2"),
     ] = None,
     output: Annotated[
         Optional[Path],
-        typer.Option(
-            "-o",
-            "--output",
+        typer.Argument(
             help="Name for the output HDF5 file. Default: <detector>_pedestal.h5",
         ),
     ] = None,
@@ -113,6 +91,9 @@ def pedestal(
     """
     Calibration setup for Jungfrau
     """
+    detector = get_detector()
+    print(f"Using detector: {BOLD}{detector}{NC}")
+
     if not (p0 or p1 or p2):
         raise UsageError("Must specify one of the gain modes")
 

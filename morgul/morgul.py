@@ -1,6 +1,8 @@
+from typing import Annotated
+
 import typer
 
-from . import morgul_correct, morgul_gainmap, morgul_mask, morgul_pedestal
+from . import config, morgul_correct, morgul_gainmap, morgul_mask, morgul_pedestal
 
 
 class NaturalOrderGroup(typer.core.TyperGroup):
@@ -13,7 +15,29 @@ class NaturalOrderGroup(typer.core.TyperGroup):
 app = typer.Typer(
     cls=NaturalOrderGroup,
     no_args_is_help=True,
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
 )
+
+
+@app.callback()
+def common(
+    ctx: typer.Context,
+    detector: Annotated[
+        config.Detector,
+        typer.Option(
+            "-d",
+            "--detector",
+            help="The detector to run corrections for",
+            case_sensitive=False,
+        ),
+    ] = config.Detector.JF1MD,
+) -> None:
+    # Currently, a choice of context or config function
+    obj = ctx.ensure_object(dict)
+    obj["detector"] = detector
+    config._DETECTOR = detector
+
 
 app.command()(morgul_gainmap.gainmap)
 app.command()(morgul_mask.mask)
