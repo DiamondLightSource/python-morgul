@@ -1,124 +1,174 @@
+import contextlib
+import datetime
+import time
+from logging import getLogger
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, List, NamedTuple, Optional, Self
 
 import h5py
 import numpy
+import numpy.typing
 import tqdm
 import typer
-from click.exceptions import UsageError
 
-from .config import get_config, get_detector, psi_gain_maps
-from .morgul_correct import correct_frame
-from .util import BOLD, NC
+from .config import Detector, get_detector, get_module_info
+from .util import BOLD, NC, B, G, R
 
-
-def average_pedestal(gain_mode, filename):
-    with h5py.File(filename) as f:
-        d = f["data"]
-        s = d.shape
-        image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
-        mask = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
-
-        for j in tqdm.tqdm(range(s[0]), desc=f"Gain Mode {gain_mode}"):
-            i = d[j]
-            gain = numpy.right_shift(i, 14)
-            valid = gain == gain_mode
-            i *= valid
-            mask += valid
-            image += i
-
-        # cope with zero valid observations
-
-        mask[mask == 0] = 1
-
-        return image / mask
+logger = getLogger(__name__)
 
 
-def mask(filename, pedestals, gain_maps, energy):
-    """Use the data given in filename to derive a trusted pixel mask"""
+def average_pedestal(
+    gain_mode: int,
+    dataset: h5py.Dataset,
+    *,
+    parent_progress: tqdm.tqdm | None = None,
+    progress_title: str | None = None,
+):
+    s = dataset.shape
+    image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
+    mask = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
 
-    with h5py.File(filename) as f:
-        s = f["data"].shape
+    for j in tqdm.tqdm(
+        range(s[0]), desc=progress_title or f"Gain Mode {gain_mode}", leave=False
+    ):
+        i = dataset[j]
+        gain = numpy.right_shift(i, 14)
+        valid = gain == gain_mode
+        i *= valid
+        mask += valid
+        image += i
 
-        # fetch the correct gain maps for this module
+        if parent_progress:
+            parent_progress.update(1)
 
-        image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
-        square = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
+    # cope with zero valid observations
 
-        try:
-            assert f["gainmode"][()].decode() == "dynamic"
-        except KeyError:
-            pass
+    mask[mask == 0] = 1
 
-        d = f["data"]
+    return image / mask
 
-        # compute sum, sum of squares down stack
-        for j in tqdm.tqdm(range(d.shape[0]), desc="Mask"):
-            frame = correct_frame(d[j], pedestals, gain_maps, energy)
-            image += frame
-            square += numpy.square(frame)
-        mean = image / d.shape[0]
-        var = square / d.shape[0] - numpy.square(mean)
-        mean[mean == 0] = 1
-        disp = var / mean
-        print(f"Masking {numpy.count_nonzero(disp > 3)} pixels")
-        return (disp > 3).astype(numpy.uint32)
+
+class PedestalData(NamedTuple):
+    """Pull together data about a particular file and what it represents"""
+
+    filename: Path
+    row: int
+    col: int
+    exptime: float
+    gainmode: str
+    timestamp: datetime.datetime
+    module_serial_number: str
+    module_position: str | None
+    num_images: int
+    data: numpy.typing.NDArray
+
+    @classmethod
+    def from_h5(cls, filename: Path, h5: h5py.Dataset, detector: Detector) -> Self:
+        # Work out what the module serial number and "position" is
+        module = get_module_info(detector, col=h5["column"][()], row=h5["row"][()])
+
+        return cls(
+            filename,
+            row=h5["row"][()],
+            col=h5["column"][()],
+            exptime=h5["exptime"][()],
+            gainmode=h5["gainmode"][()].decode(),
+            timestamp=datetime.datetime.fromtimestamp(h5["timestamp"][()]),
+            module_serial_number=module["module"],
+            module_position=module.get("position"),
+            num_images=h5["data"].shape[0],
+            data=h5["data"],
+        )
+
+
+# Mapping from gain mode string to numeric gain mode
+GAIN_MODES = {
+    "dynamic": 0,
+    "forceswitchg1": 1,
+    "forceswitchg2": 2,
+}
 
 
 def pedestal(
-    energy: Annotated[
-        float, typer.Option("-e", "--energy", help="photon energy (keV)")
-    ],
-    p0: Annotated[
-        Optional[Path],
-        typer.Option("-0", help="Data file for pedestal run at gain mode 0"),
-    ],
-    p1: Annotated[
-        Optional[Path],
-        typer.Option("-1", help="Data file for pedestal run at gain mode 1"),
-    ],
-    p2: Annotated[
-        Optional[Path],
-        typer.Option("-2", help="Data file for pedestal run at gain mode 2"),
+    pedestal_runs: Annotated[
+        List[Path],
+        typer.Argument(
+            help="Data files containing pedestal runs. There should be a pedestal run for every gain mode."
+        ),
     ],
     output: Annotated[
         Optional[Path],
-        typer.Argument(
+        typer.Option(
+            "-o",
             help="Name for the output HDF5 file. Default: <detector>_pedestal.h5",
         ),
-    ],
+    ] = None,
 ):
     """
     Calibration setup for Jungfrau
     """
+    start_time = time.monotonic()
     detector = get_detector()
-    print(f"Using detector: {BOLD}{detector}{NC}")
+    print(f"Using detector: {G}{detector}{NC}")
 
-    output = output or Path(f"{detector}_pedestal.h5")
-    with h5py.File(output, "w") as f:
-        pedestals = {}
-        if p0:
-            p0 = average_pedestal(0, p0)
-            pedestals["p0"] = p0
-            f.create_dataset("p0", data=p0)
-        if p1:
-            p1 = average_pedestal(1, p1)
-            pedestals["p1"] = p1
-            f.create_dataset("p1", data=p1)
-        if p2:
-            p2 = average_pedestal(3, p2)
-            pedestals["p2"] = p2
-            f.create_dataset("p2", data=p2)
-        if flat:
-            assert "p0" in pedestals
-            gain_maps = psi_gain_maps(detector)
+    # Cache all the data
+    pedestal_data: dict[tuple[int, int], dict[int, PedestalData]] = {}
 
-            with h5py.File(flat, "r") as _f:
-                r = int(_f["row"][()])
-                c = int(_f["column"][()])
+    exposure_time: float | None = None
+    num_images_total = 0
 
-            config = get_config()
-            module = config[f"{detector}-{c}{r}"]["module"]
-            maps = gain_maps[module]
-            m = mask(flat, pedestals, maps, energy)
-            f.create_dataset("mask", data=m)
+    with contextlib.ExitStack() as stack:
+        # Open all pedestal files and validate we don't have any duplicate data
+        for filename in pedestal_runs:
+            logger.debug(f"Reading {filename}")
+            h5 = stack.enter_context(h5py.File(filename, "r"))
+            data = PedestalData.from_h5(filename, h5, detector)
+
+            gain_mode = GAIN_MODES[data.gainmode]
+            if exposure_time is None:
+                exposure_time = data.exptime
+                logger.info(
+                    f"Generating pedestals for exposure time: {G}{exposure_time*1000:.0f}{NC} ms"
+                )
+            else:
+                # Validate that this file matches the previously determined exposure time
+                if data.exptime != exposure_time:
+                    logger.error(
+                        f"Error: pedestal file {filename} exposure time ({data.exptime}) does not match others ({exposure_time})"
+                    )
+                    raise typer.Abort()
+            module = pedestal_data.setdefault((data.col, data.row), dict())
+            # Validate we didn't get passed two from the same mode
+            if gain_mode in module:
+                logger.error(
+                    f"{BOLD}{R}Error: Duplicate gain mode {gain_mode} (both {module[gain_mode].filename} and {filename}{NC})"
+                )
+                raise typer.Abort()
+            module[gain_mode] = data
+            num_images_total += data.num_images
+            logger.info(
+                f"Got file {B}{filename}{NC} with gain mode {G}{gain_mode}{NC} for module ({G}{data.row}{NC}, {G}{data.col}{NC}) ({G}{data.module_serial_number}{NC})"
+            )
+
+        output = output or Path(f"{detector}_pedestal.h5")
+        f_output = stack.enter_context(h5py.File(output, "w"))
+
+        # Analyse the pedestal data and write the output
+        with tqdm.tqdm(total=num_images_total, leave=False) as progress:
+            for (col, row), modes in pedestal_data.items():
+                for gain_mode, data in sorted(modes.items(), key=lambda x: x[0]):
+                    pedestal = average_pedestal(
+                        gain_mode,
+                        data.data,
+                        parent_progress=progress,
+                        progress_title=f" {data.module_serial_number} Gain {gain_mode}",
+                    )
+                    if data.module_serial_number not in f_output:
+                        f_output.create_group(data.module_serial_number)
+                    group = f_output[data.module_serial_number]
+                    group.create_dataset(f"pedestal_{gain_mode}", data=pedestal)
+
+        print()
+        logger.info(
+            f"Written output file {B}{output}{NC} in {G}{time.monotonic()-start_time:.1f}{NC} s."
+        )

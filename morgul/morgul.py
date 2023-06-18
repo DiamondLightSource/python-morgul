@@ -47,8 +47,8 @@ def common(
 
 
 app.command()(morgul_gainmap.gainmap)
-app.command()(morgul_mask.mask)
 app.command()(morgul_pedestal.pedestal)
+app.command()(morgul_mask.mask)
 app.command()(morgul_correct.correct)
 
 

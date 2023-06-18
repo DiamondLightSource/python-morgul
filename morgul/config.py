@@ -7,6 +7,7 @@ import logging
 import socket
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import numpy
 import numpy.typing
@@ -58,6 +59,11 @@ def get_config():
     ) as fo:
         configuration.read(fo)
     return configuration
+
+
+def get_module_info(detector: Detector, col: int, row: int) -> dict[str, Any]:
+    """Get metainformation about a module from the detector and position"""
+    return get_config()[f"{detector}-{col}{row}"]
 
 
 @lru_cache
