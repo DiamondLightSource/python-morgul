@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 import typer
@@ -23,6 +24,7 @@ app = typer.Typer(
 @app.callback()
 def common(
     ctx: typer.Context,
+    verbose: Annotated[bool, typer.Option("-v", help="Show debug output")] = False,
     detector: Annotated[
         config.Detector,
         typer.Option(
@@ -37,6 +39,11 @@ def common(
     obj = ctx.ensure_object(dict)
     obj["detector"] = detector
     config._DETECTOR = detector
+
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO, format="%(message)s"
+    )
+    logging.debug("Verbose output enabled")
 
 
 app.command()(morgul_gainmap.gainmap)
