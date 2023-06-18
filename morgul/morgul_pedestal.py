@@ -160,7 +160,7 @@ def pedestal(
             if exposure_time is None:
                 exposure_time = data.exptime
                 logger.info(
-                    f"Generating pedestals for exposure time: {G}{exposure_time*1000:.0f}{NC} ms"
+                    f"Generating pedestals for exposure time: {G}{exposure_time*1000:g}{NC} ms"
                 )
             else:
                 # Validate that this file matches the previously determined exposure time
