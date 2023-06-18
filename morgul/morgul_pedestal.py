@@ -88,6 +88,40 @@ GAIN_MODES = {
 }
 
 
+def write_pedestal_output(
+    root: h5py.Group, pedestal_data: dict[tuple[int, int], dict[int, PedestalData]]
+) -> None:
+    """Calculate pedestals from source files and write into the output file"""
+
+    # Calculate how many images total
+    num_images_total = 0
+    for modes in pedestal_data.values():
+        for data in modes.values():
+            num_images_total += data.num_images
+
+    # Analyse the pedestal data and write the output
+    with tqdm.tqdm(total=num_images_total, leave=False) as progress:
+        for (col, row), modes in pedestal_data.items():
+            for gain_mode, data in sorted(modes.items(), key=lambda x: x[0]):
+                pedestal = average_pedestal(
+                    gain_mode,
+                    data.data,
+                    parent_progress=progress,
+                    progress_title=f" {data.module_serial_number} Gain {gain_mode}",
+                )
+                if data.module_serial_number not in root:
+                    group = root.create_group(data.module_serial_number)
+                    if data.module_position is not None:
+                        group.attrs["position"] = data.module_position.strip("\"'")
+                    group.attrs["row"] = row
+                    group.attrs["col"] = col
+
+                group = root[data.module_serial_number]
+                dataset = group.create_dataset(f"pedestal_{gain_mode}", data=pedestal)
+                dataset.attrs["timestamp"] = int(data.timestamp.timestamp())
+                dataset.attrs["filename"] = str(data.filename)
+
+
 def pedestal(
     pedestal_runs: Annotated[
         List[Path],
@@ -114,7 +148,6 @@ def pedestal(
     pedestal_data: dict[tuple[int, int], dict[int, PedestalData]] = {}
 
     exposure_time: float | None = None
-    num_images_total = 0
 
     with contextlib.ExitStack() as stack:
         # Open all pedestal files and validate we don't have any duplicate data
@@ -144,7 +177,6 @@ def pedestal(
                 )
                 raise typer.Abort()
             module[gain_mode] = data
-            num_images_total += data.num_images
             logger.info(
                 f"Got file {B}{filename}{NC} with gain mode {G}{gain_mode}{NC} for module ({G}{data.row}{NC}, {G}{data.col}{NC}) ({G}{data.module_serial_number}{NC})"
             )
@@ -158,34 +190,10 @@ def pedestal(
                 raise typer.Abort()
 
         output = output or Path(f"{detector}_{exposure_time*1000:.0f}ms_pedestal.h5")
-        f_output = stack.enter_context(h5py.File(output, "w"))
-
-        # Analyse the pedestal data and write the output
-        with tqdm.tqdm(total=num_images_total, leave=False) as progress:
-            for (col, row), modes in pedestal_data.items():
-                for gain_mode, data in sorted(modes.items(), key=lambda x: x[0]):
-                    pedestal = average_pedestal(
-                        gain_mode,
-                        data.data,
-                        parent_progress=progress,
-                        progress_title=f" {data.module_serial_number} Gain {gain_mode}",
-                    )
-                    if data.module_serial_number not in f_output:
-                        group = f_output.create_group(data.module_serial_number)
-                        if data.module_position is not None:
-                            group.attrs["position"] = data.module_position.strip("\"'")
-                        group.attrs["row"] = row
-                        group.attrs["col"] = col
-
-                    group = f_output[data.module_serial_number]
-                    dataset = group.create_dataset(
-                        f"pedestal_{gain_mode}", data=pedestal
-                    )
-                    dataset.attrs["timestamp"] = int(data.timestamp.timestamp())
-                    dataset.attrs["filename"] = str(data.filename)
-
-        # Write extra metadata into the file
-        f_output.create_dataset("exptime", data=exposure_time)
+        with h5py.File(output, "w") as f_output:
+            write_pedestal_output(f_output, pedestal_data)
+            # Write extra metadata into the file
+            f_output.create_dataset("exptime", data=exposure_time)
 
         elapsed_time = time.monotonic() - start_time
         if elapsed_time > 60:
