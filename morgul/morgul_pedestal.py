@@ -150,6 +150,14 @@ def pedestal(
                 f"Got file {B}{filename}{NC} with gain mode {G}{gain_mode}{NC} for module ({G}{data.row}{NC}, {G}{data.col}{NC}) ({G}{data.module_serial_number}{NC})"
             )
 
+        # Validate that every module had a complete set of gain modes
+        for module_addr, gains in pedestal_data.items():
+            if not len(gains) == len(GAIN_MODES):
+                logger.error(
+                    f"{R}Error: Incomplete data set. Module {module_addr} only has {len(gains)} gain modes, expected {len(GAIN_MODES)}{NC}"
+                )
+                raise typer.Abort()
+
         output = output or Path(f"{detector}_pedestal.h5")
         f_output = stack.enter_context(h5py.File(output, "w"))
 
