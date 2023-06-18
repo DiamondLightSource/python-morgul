@@ -12,7 +12,7 @@ import tqdm
 import typer
 
 from .config import Detector, get_detector, get_module_info
-from .util import BOLD, NC, B, G, R
+from .util import BOLD, NC, B, G, R, elapsed_time_string
 
 logger = getLogger(__name__)
 
@@ -195,13 +195,7 @@ def pedestal(
             # Write extra metadata into the file
             f_output.create_dataset("exptime", data=exposure_time)
 
-        elapsed_time = time.monotonic() - start_time
-        if elapsed_time > 60:
-            elapsed_time_str = (
-                f"{G}{elapsed_time//60:.0f}{NC}m {G}{elapsed_time%60:.0f}{NC}s"
-            )
-        else:
-            elapsed_time_str = f"{G}{elapsed_time:.1f}{NC}s"
-
         print()
-        logger.info(f"Written output file {B}{output}{NC} in {elapsed_time_str}.")
+        logger.info(
+            f"Written output file {B}{output}{NC} in {elapsed_time_string(start_time)}."
+        )
