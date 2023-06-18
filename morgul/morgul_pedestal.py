@@ -100,7 +100,7 @@ def pedestal(
         Optional[Path],
         typer.Option(
             "-o",
-            help="Name for the output HDF5 file. Default: <detector>_pedestal.h5",
+            help="Name for the output HDF5 file. Default: <detector>_<exptime>ms_pedestal.h5",
         ),
     ] = None,
 ):
@@ -158,7 +158,7 @@ def pedestal(
                 )
                 raise typer.Abort()
 
-        output = output or Path(f"{detector}_pedestal.h5")
+        output = output or Path(f"{detector}_{exposure_time*1000:.0f}ms_pedestal.h5")
         f_output = stack.enter_context(h5py.File(output, "w"))
 
         # Analyse the pedestal data and write the output
