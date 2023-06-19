@@ -50,6 +50,13 @@ app.command()(morgul_gainmap.gainmap)
 app.command()(morgul_pedestal.pedestal)
 app.command()(morgul_mask.mask)
 app.command()(morgul_correct.correct)
+try:
+    # view depends on things that might not be installed e.g. napari
+    from .view import view
+
+    app.command()(view)
+except ModuleNotFoundError:
+    pass
 
 
 def main() -> None:
