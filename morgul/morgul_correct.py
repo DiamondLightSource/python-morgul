@@ -280,5 +280,5 @@ def correct(
 
     print()
     logger.info(
-        f"Written {len(data)} corrected data files in {elapsed_time_string(start_time)}."
+        f"Written {G}{total_images}{NC} images in {G}{len(data_files)}{NC}s corrected data files in {elapsed_time_string(start_time)}."
     )
