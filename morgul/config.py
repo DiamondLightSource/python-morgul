@@ -67,7 +67,7 @@ def get_known_modules_for_detector(detector: Detector) -> list[str]:
     return [
         x["module"]
         for k, x in config.items()
-        if k.lower().startswith(str(detector).lower() + "-")
+        if k.lower().startswith(str(detector.value).lower() + "-")
     ]
 
 

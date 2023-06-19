@@ -28,6 +28,7 @@ class PedestalCorrections:
         self.filename = filename
 
         valid_modules = get_known_modules_for_detector(detector)
+        assert valid_modules
         self._tables = {}
         with h5py.File(filename, "r") as f:
             # For now, just read all data into memory
