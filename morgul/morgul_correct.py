@@ -182,6 +182,13 @@ def correct_frame(
     return frame
 
 
+def output_filename(filename: Path, output_dir: Path | None) -> Path:
+    # Work out where the output file will go
+    return (
+        output_dir or filename.parent
+    ) / f"{filename.stem}_corrected{filename.suffix}"
+
+
 def correct(
     pedestal: Annotated[
         Path,
@@ -203,6 +210,9 @@ def correct(
             help="Output folder for the corrected files. Files will be written here with the suffix '_corrected.<ext>'. Defaults to same as input file. ",
         ),
     ] = None,
+    force: Annotated[
+        bool, typer.Option("-f", "--force", help="Overwrite files that already exist")
+    ] = False,
 ):
     """Correction program for Jungfrau"""
 
@@ -226,6 +236,7 @@ def correct(
         # Do a pre-pass so that we can count the total number of images
         h5s = {}
         total_images = 0
+        existing_output_filenames = []
         # Go through every data file input on a first pass
         for filename in data_files:
             h5 = stack.enter_context(h5py.File(filename, "r"))
@@ -244,6 +255,27 @@ def correct(
                 continue
             total_images += h5["data"].shape[0]
             h5s[filename] = h5
+            # Work out what the output filename would be
+            out = output_filename(filename, output)
+            if out.is_file():
+                existing_output_filenames.append(out)
+
+        # Handle output filename existence. Do this so that we print everything
+        # that could be overwritten, instead of the first - in which case it
+        # might unexpectedly overwrite a file the user didn't expect
+        if existing_output_filenames and not force:
+            outputs = "\n".join(["  - " + str(x) for x in existing_output_filenames])
+            logger.error(
+                f"""
+{R}Error: The following files already exist and would be overwritten:
+
+{outputs}
+
+please pass --force/-f if you want to overwrite these files.{NC}
+"""
+            )
+            raise typer.Abort()
+
         if not h5s:
             logger.error(
                 f"{R}Error: No data files present after filtering out corrected{NC}"
@@ -276,10 +308,7 @@ def correct(
             data = h5["data"]
             exposure_time = h5["exptime"][()]
 
-            # Work out where the output file will go
-            out_filename = (
-                output or filename.parent
-            ) / f"{filename.stem}_corrected{filename.suffix}"
+            out_filename = output_filename(filename, output)
             pre_msg = f"Processing {G}{data.shape[0]}{NC} images from module {G}{module}{NC} in "
             progress.write(
                 f"{pre_msg}{B}{filename}{NC}\n{' '*(len(strip_escapes(pre_msg))-5)}into {B}{out_filename}{NC}"
