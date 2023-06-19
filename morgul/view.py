@@ -69,7 +69,9 @@ def view(filename: Annotated[Path, typer.Argument(help="Data file to view")]):
             logger.error(f"{R}Error: Could not determine file kind for {filename}{NC}")
             raise typer.Abort()
 
-        logger.info(f"Opening {B}{filename}{NC} as {G}{kind.name.title()}{NC}")
+        logger.info(
+            f"Opening {B}{filename}{NC} as {G}{kind.name.replace('_', ' ').title()}{NC}"
+        )
         if kind == FileKind.PEDESTAL:
             for module in "M420", "M418":
                 for mode in 0, 1, 2:
