@@ -278,7 +278,7 @@ def correct(
                     progress.update(1)
                     out_dataset[n] = embiggen(numpy.around(frame))
                 # Copy over all other metadata
-                for k, v in f.items():
+                for k, v in h5.items():
                     if isinstance(v, h5py.Dataset) and v.shape == ():
                         f.create_dataset(k, data=v)
 
