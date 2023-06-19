@@ -314,6 +314,13 @@ please pass --force/-f if you want to overwrite these files.{NC}
                 f"{pre_msg}{B}{filename}{NC}\n{' '*(len(strip_escapes(pre_msg))-5)}into {B}{out_filename}{NC}"
             )
 
+            # Safety check - don't overwrite if no --force
+            if out_filename.is_file() and not force:
+                logger.error(
+                    f"{R}Error: {out_filename} exists but will not overwrite. Pass --force to overwrite."
+                )
+                raise typer.Abort()
+
             with h5py.File(out_filename, "w") as f:
                 out_dataset = f.create_dataset(
                     "data",
