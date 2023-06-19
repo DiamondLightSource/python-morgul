@@ -3,7 +3,7 @@ import datetime
 import time
 from logging import getLogger
 from pathlib import Path
-from typing import Annotated, List, NamedTuple, Optional, Self
+from typing import Annotated, List, NamedTuple, Optional
 
 import h5py
 import numpy
@@ -62,11 +62,13 @@ class PedestalData(NamedTuple):
     data: numpy.typing.NDArray
 
     @classmethod
-    def from_h5(cls, filename: Path, h5: h5py.Dataset, detector: Detector) -> Self:
+    def from_h5(
+        cls, filename: Path, h5: h5py.Dataset, detector: Detector
+    ) -> "PedestalData":
         # Work out what the module serial number and "position" is
         module = get_module_info(detector, col=h5["column"][()], row=h5["row"][()])
 
-        return cls(
+        return PedestalData(
             filename,
             row=h5["row"][()],
             col=h5["column"][()],
