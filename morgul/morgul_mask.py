@@ -90,7 +90,7 @@ def mask(
     """Prepare a pixel mask from flatfield data"""
     start_time = time.monotonic()
     detector = get_detector()
-    logger.info(f"Using detector: {G}{detector}{NC}")
+    logger.info(f"Using detector: {G}{detector.value}{NC}")
 
     gain_maps = psi_gain_maps(detector)
 
@@ -160,7 +160,9 @@ def mask(
 
         # Run these
         with tqdm.tqdm(total=total_images, leave=False) as progress:
-            output = output or Path(f"{detector}_{exposure_time*1000:g}ms_mask.h5")
+            output = output or Path(
+                f"{detector.value}_{exposure_time*1000:g}ms_mask.h5"
+            )
             h5_out = stack.enter_context(h5py.File(output, "w"))
             # for call in tqdm.tqdm(calls, total=total_images):
             for module, call in calls:
