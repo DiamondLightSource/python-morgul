@@ -76,6 +76,23 @@ def get_module_info(detector: Detector, col: int, row: int) -> dict[str, Any]:
     return get_config()[f"{detector.value}-{col}{row}"]
 
 
+def get_module_from_id(module_id: str) -> dict[str, Any]:
+    # Find a module with this ID
+    config = get_config()
+    cands = [
+        k
+        for k, v in config.items()
+        if "module" in v and config[k]["module"] == module_id
+    ]
+    logger.debug(f"Got candidates: {cands}\nfor: {config.keys()}")
+    if not cands:
+        raise KeyError(f"Could not find module entry for module {module_id}")
+    elif len(cands) > 1:
+        raise KeyError(f"More than one module entry for module {module_id}")
+
+    return config[cands[0]]
+
+
 @lru_cache
 def get_calibration_path(hostname: str | None = None) -> Path:
     """Determine the calibration folder location"""

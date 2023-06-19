@@ -6,6 +6,7 @@ from typing import Annotated, TypeAlias
 
 import h5py
 import napari
+import numpy as np
 import typer
 
 from . import config
@@ -80,11 +81,33 @@ def view_pedestal(filename: Path, root: h5py.Group) -> None:
     detector = config.get_detector()
     modules = config.get_known_modules_for_detector(detector)
 
+    points = []
+    point_texts = []
     for module in modules:
         for mode in 0, 1, 2:
             name = f"pedestal_{mode}"
             if name in root[module]:
-                viewer.add_image(root[module][name][()], name=f"{module}/{mode}")
+                h, w = root[module][name].shape
+                print(h, w)
+                # Get the position for this module
+                module_info = config.get_module_from_id(module)
+                translate = [0, 0]
+                point_vertical = -h - 50
+                if module_info["position"] == "bottom":
+                    translate[0] = -h - 36
+                    point_vertical = h + 36 + 20
+                translate[1] = mode * (w + 20)
+                viewer.add_image(
+                    root[module][name][()], name=f"{module}/{mode}", translate=translate
+                )
+                points.append([point_vertical, mode * (w + 20) + (w / 2)])
+                point_texts.append(f"{module}/{mode}")
+    # Convert the pointsdata to array, and add
+    point_data = np.array(points)
+    print(point_data)
+    viewer.add_points(point_data, text=point_texts, size=0)
+
+    viewer.reset_view()
 
 
 @viewer(FileKind.RAW)
