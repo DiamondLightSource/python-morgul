@@ -6,6 +6,8 @@ R = "\033[31m"
 G = "\033[32m"
 B = "\033[34m"
 NC = "\033[0m"
+Y = "\033[33m"
+GRAY = "\033[37m"
 
 
 def elapsed_time_string(start_time: float) -> str:

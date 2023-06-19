@@ -18,7 +18,7 @@ from .config import (
     get_module_info,
     psi_gain_maps,
 )
-from .util import NC, B, G, R, elapsed_time_string, strip_escapes
+from .util import NC, B, G, R, Y, elapsed_time_string, strip_escapes
 
 logger = logging.getLogger(__name__)
 
@@ -224,8 +224,32 @@ def correct(
 
     with contextlib.ExitStack() as stack:
         # Do a pre-pass so that we can count the total number of images
-        h5s = {x: h5py.File(x, "r") for x in data_files}
-        total_images = sum(x["data"].shape[0] for x in h5s.values())
+        h5s = {}
+        total_images = 0
+        # Go through every data file input on a first pass
+        for filename in data_files:
+            h5 = stack.enter_context(h5py.File(filename, "r"))
+            # If this file is already corrected, ignore it
+            if "data" not in h5:
+                logger.error(
+                    f"{R}Error: File {filename} does not have a 'data' dataset"
+                )
+                raise typer.Abort()
+            # If this was previously corrected, ignore it
+            if "corrected" in h5["data"].attrs and h5["data"].attrs["corrected"]:
+                logger.warning(
+                    f"{Y}File {filename} contains corrected data, ignoring.{NC}"
+                )
+                h5.close()
+                continue
+            total_images += h5["data"].shape[0]
+            h5s[filename] = h5
+        if not h5s:
+            logger.error(
+                f"{R}Error: No data files present after filtering out corrected{NC}"
+            )
+            raise typer.Abort()
+
         print(f"Correcting total of: {G}{total_images}{NC} images")
 
         # Do validations for everything before we start correcting
@@ -269,6 +293,7 @@ def correct(
                     chunks=(1, 514, 1030),
                     **hdf5plugin.Bitshuffle(cname="lz4"),
                 )
+                out_dataset.attrs["corrected"] = True
                 for n in tqdm.tqdm(
                     range(data.shape[0]), leave=False, desc=f"{filename.name}"
                 ):
