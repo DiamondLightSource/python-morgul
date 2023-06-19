@@ -28,7 +28,7 @@ def determine_kinds(root: h5py.Group) -> set[FileKind]:
     kinds = set()
     # Work out what sort of file we have
     module_subgroups = [
-        x for x in modules if isinstance(root[x], h5py.Group) and x in root
+        x for x in modules if x in root and isinstance(root[x], h5py.Group)
     ]
     for module in module_subgroups:
         if "mask" in root[module]:
@@ -73,6 +73,8 @@ def view(filename: Annotated[Path, typer.Argument(help="Data file to view")]):
                     viewer.add_image(
                         f[module][f"pedestal_{mode}"][()], name=f"{module}/{mode}"
                     )
+        elif kind == FileKind.RAW:
+            viewer.add_image(f["data"], name=f"{filename}")
         else:
             logger.error(
                 f"{R}Error: File kind {kind.name} is not currently supported{NC}"
