@@ -1,3 +1,4 @@
+import re
 import time
 
 BOLD = "\033[1m"
@@ -13,3 +14,7 @@ def elapsed_time_string(start_time: float) -> str:
         return f"{G}{elapsed_time//60:.0f}m {elapsed_time%60:.0f}s{NC}"
     else:
         return f"{G}{elapsed_time:.1f}s{NC}"
+
+
+def strip_escapes(input: str) -> str:
+    return re.sub("\033" + r"\[[\d;]+m", "", input)

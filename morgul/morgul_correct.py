@@ -1,6 +1,8 @@
+import contextlib
 import logging
+import time
 from pathlib import Path
-from typing import Annotated, Any, cast, overload
+from typing import Annotated, Any, Optional, cast, overload
 
 import h5py
 import hdf5plugin
@@ -9,7 +11,14 @@ import numpy.typing
 import tqdm
 import typer
 
-from .config import Detector, get_known_modules_for_detector, psi_gain_maps
+from .config import (
+    Detector,
+    get_detector,
+    get_known_modules_for_detector,
+    get_module_info,
+    psi_gain_maps,
+)
+from .util import NC, B, G, strip_escapes
 
 logger = logging.getLogger(__name__)
 
@@ -174,27 +183,67 @@ def correct_frame(
 
 
 def correct(
-    detector: Annotated[
-        str, typer.Argument(help="Which detector to run calibration preparations for")
-    ],
-    module: Annotated[
-        str,
-        typer.Option("-m", "--module", help="module data taken from i.e. 0, 1, ..."),
-    ],
     pedestal: Annotated[
-        Path, typer.Option("-p", "--pedestal", help="pedestal data from this module")
+        Path,
+        typer.Argument(
+            help="Pedestal data file for the module(s), from 'morgul pedestal'."
+        ),
     ],
-    data: Annotated[
-        Path, typer.Option("-d", "--data", help="data to correct from this module")
+    mask: Annotated[Path, typer.Argument(help="Pixel mask, from 'morgul mask'.")],
+    data_files: Annotated[
+        list[Path], typer.Argument("data", help="Data files, for corrections.")
     ],
     energy: Annotated[
         float, typer.Option("-e", "--energy", help="photon energy (keV)")
     ],
+    output: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-o",
+            help="Output folder for the corrected files. Files will be written here with the suffix '_corrected.<ext>'. Defaults to same as input file. ",
+        ),
+    ] = None,
 ):
     """Correction program for Jungfrau"""
 
-    pedestals = get_pedestals(pedestal)
+    time.monotonic()
+    detector = get_detector()
+    logger.info(f"Using detector: {G}{detector.value}{NC}")
+
+    logger.info(f"Using mask from: {G}mask{NC}")
+    print("Warning: No mask yet")
+
+    pedestals = PedestalCorrections(detector, pedestal)
+    logger.info(f"Reading pedestals from: {B}{pedestal}{NC}")
+
+    # pedestals = get_pedestals(pedestal)
     maps = psi_gain_maps(detector)
+
+    with contextlib.ExitStack() as stack:
+        # Do a pre-pass so that we can count the total number of images
+        h5s = {x: h5py.File(x, "r") for x in data_files}
+        total_images = sum(x["data"].shape[0] for x in h5s.values())
+        print(f"Correcting total of: {G}{total_images}{NC} images")
+
+        progress = stack.enter_context(tqdm.tqdm(total=total_images))
+
+        for filename, h5 in h5s.items():
+            # Get the module this data was taken with
+            module = get_module_info(detector, h5["column"][()], h5["row"][()])[
+                "module"
+            ]
+            data = h5["data"]
+
+            # Work out where the output file will go
+            out_filename = (
+                output or filename.parent
+            ) / f"{filename.stem}_corrected{filename.suffix}"
+            pre_msg = f"Processing {G}{data.shape[0]}{NC} images from module {G}{module}{NC} in "
+            progress.write(
+                f"{pre_msg}{B}{filename}{NC}\n{' '*(len(strip_escapes(pre_msg))-5)}into {B}{out_filename}{NC}"
+            )
+
+    return
 
     g012 = maps[module]
 
