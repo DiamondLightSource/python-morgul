@@ -115,6 +115,6 @@ def psi_gain_maps(detector: Detector) -> dict[str, numpy.typing.NDArray[numpy.fl
         result[module] = gains
 
     if not result:
-        raise RuntimeError(f"Got no gain map results for detector {detector}")
+        raise RuntimeError(f"Got no gain map results for detector {detector.value}")
 
     return result

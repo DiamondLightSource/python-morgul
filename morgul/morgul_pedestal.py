@@ -150,7 +150,7 @@ def pedestal(
     """
     start_time = time.monotonic()
     detector = get_detector()
-    print(f"Using detector: {G}{detector}{NC}")
+    print(f"Using detector: {G}{detector.value}{NC}")
 
     # Cache all the data
     pedestal_data: dict[tuple[int, int], dict[int, PedestalData]] = {}
@@ -197,7 +197,9 @@ def pedestal(
                 )
                 raise typer.Abort()
 
-        output = output or Path(f"{detector}_{exposure_time*1000:.0f}ms_pedestal.h5")
+        output = output or Path(
+            f"{detector.value}_{exposure_time*1000:.0f}ms_pedestal.h5"
+        )
         with h5py.File(output, "w") as f_output:
             write_pedestal_output(f_output, pedestal_data)
             # Write extra metadata into the file
