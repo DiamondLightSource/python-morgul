@@ -124,6 +124,31 @@ class PedestalCorrections:
         return output
 
 
+class Masker:
+    filename: Path
+    exposure_times: set[float]
+
+    def __init__(self, detector: Detector, filename: Path):
+        self.filename = filename
+        modules = get_known_modules_for_detector(detector)
+
+        self._table = {}
+
+        # Read the masks out of this data file
+        with h5py.File(filename, "r") as f:
+            exptime = f["exptime"][()]
+            self.exposure_times = {exptime}
+            for module in modules:
+                if module in f:
+                    self._table[exptime, module] = numpy.copy(f[module]["mask"])
+
+    def __getitem__(self, key: tuple[float, str]) -> numpy.typing.NDArray:
+        return self._table[key]
+
+    def __contains__(self, key: tuple[float, str]) -> bool:
+        return key in self._table
+
+
 def get_pedestals(pedestal_file):
     pedestals = {}
 
@@ -161,21 +186,28 @@ def correct_frame(
     pedestals: dict[int, numpy.typing.NDArray],
     g012,
     energy: float,
+    mask: numpy.typing.NDArray | None = None,
 ):
     """Correct pixel values to photons in frame"""
 
+    assert 1 in pedestals and 2 in pedestals and 0 in pedestals
+
     gain = numpy.right_shift(raw, 14)
-    m0 = pedestals[0] != 0
+
+    mask = mask is False
+    m0 = (pedestals[0] != 0) * mask
     frame = ((gain == 0) * (numpy.bitwise_and(raw, 0x3FFF)) * m0 - pedestals[0]) / (
         g012[0] * energy
     )
+
     if 1 in pedestals:
-        m1 = pedestals[1] != 0
+        m1 = (pedestals[1] != 0) * mask
         frame += (
             (gain == 1) * ((numpy.bitwise_and(raw, 0x3FFF)) * m1 - pedestals[1])
         ) / (g012[1] * energy)
+
     if 2 in pedestals:
-        m2 = pedestals[2] != 0
+        m2 = (pedestals[2] != 0) * mask
         frame += (
             (gain == 3) * ((numpy.bitwise_and(raw, 0x3FFF)) * m2 - pedestals[2])
         ) / (g012[2] * energy)
@@ -248,7 +280,7 @@ def correct(
             help="Pedestal data file for the module(s), from 'morgul pedestal'."
         ),
     ],
-    mask: Annotated[Path, typer.Argument(help="Pixel mask, from 'morgul mask'.")],
+    mask_file: Annotated[Path, typer.Argument(help="Pixel mask, from 'morgul mask'.")],
     data_files: Annotated[
         list[Path], typer.Argument(help="Data files, for corrections.", metavar="DATA")
     ],
@@ -272,17 +304,15 @@ def correct(
     detector = get_detector()
     logger.info(f"Using detector: {G}{detector.value}{NC}")
 
-    logger.info(f"Using mask from: {B}{mask}{NC}")
-    print("Warning: No mask yet")
-    mask_exposures = {0.001}
+    logger.info(f"Using mask from: {B}{mask_file}{NC}")
+    masker = Masker(detector, mask_file)
 
     pedestals = PedestalCorrections(detector, pedestal)
     logger.info(f"Reading pedestals from: {B}{pedestal}{NC}")
 
-    # pedestals = get_pedestals(pedestal)
-    maps = psi_gain_maps(detector)
+    gain_maps = psi_gain_maps(detector)
 
-    available_exposures = pedestals.exposure_times & mask_exposures
+    available_exposures = pedestals.exposure_times & masker.exposure_times
 
     with contextlib.ExitStack() as stack:
         # Do basic cross-checks and filter out corrected files
@@ -315,6 +345,13 @@ def correct(
             data = h5["data"]
             exposure_time = h5["exptime"][()]
 
+            # Check we have a mask for this module
+            if (exposure_time, module) not in masker:
+                logger.error(
+                    f"{R}Error: Do not have mask for (exptime: {exposure_time*1000:g} ms, module: {module}){NC}"
+                )
+                raise typer.Abort()
+
             out_filename = output_filename(filename, output)
             pre_msg = f"Processing {G}{data.shape[0]}{NC} images from module {G}{module}{NC} in "
             progress.write(
@@ -341,7 +378,11 @@ def correct(
                     range(data.shape[0]), leave=False, desc=f"{filename.name}"
                 ):
                     frame = correct_frame(
-                        data[n], pedestals[exposure_time, module], maps[module], energy
+                        data[n],
+                        pedestals[exposure_time, module],
+                        gain_maps[module],
+                        energy,
+                        masker[exposure_time, module],
                     )
                     progress.update(1)
                     out_dataset[n] = embiggen(numpy.around(frame))
