@@ -1,7 +1,8 @@
 import enum
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 import h5py
 import napari
@@ -20,6 +21,20 @@ class FileKind(enum.Enum):
     PEDESTAL = enum.auto()
     RAW = enum.auto()
     CORRECTED = enum.auto()
+
+
+ViewCallable: TypeAlias = Callable[[Path, h5py.Group], None]
+view_functions: dict[FileKind, ViewCallable] = {}
+
+
+def viewer(kind: FileKind) -> Callable[[ViewCallable], ViewCallable]:
+    def _wrapped(view_func: ViewCallable) -> ViewCallable:
+        if kind in view_functions:
+            raise ValueError(f"Viewer for {kind} is already registered")
+        view_functions[kind] = view_func
+        return view_func
+
+    return _wrapped
 
 
 def determine_kinds(root: h5py.Group) -> set[FileKind]:
@@ -59,31 +74,44 @@ def determine_kind(root: h5py.Group) -> FileKind | None:
     return None
 
 
+@viewer(FileKind.PEDESTAL)
+def view_pedestal(filename: Path, root: h5py.Group) -> None:
+    viewer = napari.Viewer()
+    detector = config.get_detector()
+    modules = config.get_known_modules_for_detector(detector)
+
+    for module in modules:
+        for mode in 0, 1, 2:
+            name = f"pedestal_{mode}"
+            if name in root[module]:
+                viewer.add_image(root[module][name][()], name=f"{module}/{mode}")
+
+
+@viewer(FileKind.RAW)
+def view_raw(filename: Path, root: h5py.Group) -> None:
+    viewer = napari.Viewer()
+
+    viewer.add_image(root["data"], name=str(filename))
+
+
 def view(filename: Annotated[Path, typer.Argument(help="Data file to view")]):
     """Launch a napari-based viewer"""
 
-    with h5py.File(filename, "r") as f:
-        viewer = napari.Viewer()
+    with h5py.File(filename) as f:
         kind = determine_kind(f)
+        logger.info(f"Opening {B}{filename}{NC} as {G}{kind.name.title()}{NC}")
+
         if kind is None:
-            logger.error(f"{R}Error: Could not determine file kind for {filename}{NC}")
+            logger.error(
+                f"{R}Error: Could not determine common file kind for {filename}{NC}"
+            )
             raise typer.Abort()
 
-        logger.info(
-            f"Opening {B}{filename}{NC} as {G}{kind.name.replace('_', ' ').title()}{NC}"
-        )
-        if kind == FileKind.PEDESTAL:
-            for module in "M420", "M418":
-                for mode in 0, 1, 2:
-                    viewer.add_image(
-                        f[module][f"pedestal_{mode}"][()], name=f"{module}/{mode}"
-                    )
-        elif kind == FileKind.RAW:
-            viewer.add_image(f["data"], name=f"{filename}")
+        if kind in view_functions:
+            view_functions[kind](filename, f)
+            napari.run()
         else:
             logger.error(
                 f"{R}Error: File kind {kind.name} is not currently supported{NC}"
             )
             raise typer.Abort()
-
-        napari.run()
