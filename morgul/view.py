@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class FileKind(enum.Enum):
     # UNKNOWN = enum.auto()
+    GAIN_MAP = enum.auto()
     MASK = enum.auto()
     PEDESTAL = enum.auto()
     RAW = enum.auto()
@@ -31,6 +32,8 @@ def determine_kinds(root: h5py.Group) -> set[FileKind]:
         x for x in modules if x in root and isinstance(root[x], h5py.Group)
     ]
     for module in module_subgroups:
+        if "g0" in root[module] or "g1" in root[module] or "g2" in root[module]:
+            kinds.add(FileKind.GAIN_MAP)
         if "mask" in root[module]:
             kinds.add(FileKind.MASK)
         if any(
