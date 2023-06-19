@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 # enum Detector = enum.StrEnum("Detector", [x.upper() for x in get_known_detectors()])
 
 
-class Detector(enum.StrEnum):
-    JF1MD = enum.auto()
-    JF4MPSI = enum.auto()
+class Detector(enum.Enum):
+    JF1MD = "jf1md"
+    JF4MPSI = "jf4mpsi"
 
 
 _DETECTOR: Detector | None = None
