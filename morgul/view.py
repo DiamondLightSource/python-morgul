@@ -88,7 +88,6 @@ def view_pedestal(filename: Path, root: h5py.Group) -> None:
             name = f"pedestal_{mode}"
             if name in root[module]:
                 h, w = root[module][name].shape
-                print(h, w)
                 # Get the position for this module
                 module_info = config.get_module_from_id(module)
                 translate = [0, 0]
@@ -104,7 +103,6 @@ def view_pedestal(filename: Path, root: h5py.Group) -> None:
                 point_texts.append(f"{module}/{mode}")
     # Convert the pointsdata to array, and add
     point_data = np.array(points)
-    print(point_data)
     viewer.add_points(point_data, text=point_texts, size=0)
 
     viewer.reset_view()
