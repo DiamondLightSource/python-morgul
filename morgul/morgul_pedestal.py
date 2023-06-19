@@ -29,9 +29,7 @@ def average_pedestal(
     n_obs = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
 
     # Handle gain mode 2 being ==3
-    real_gain_mode = gain_mode
-    if gain_mode == 2:
-        real_gain_mode = 3
+    real_gain_mode = GAIN_MODE_REAL[gain_mode]
 
     for j in tqdm.tqdm(
         range(s[0]), desc=progress_title or f"Gain Mode {gain_mode}", leave=False
@@ -92,8 +90,10 @@ class PedestalData(NamedTuple):
 GAIN_MODES = {
     "dynamic": 0,
     "forceswitchg1": 1,
-    "forceswitchg2": 3,
+    "forceswitchg2": 2,
 }
+# The "Real" gain mode, as stored in the data
+GAIN_MODE_REAL = {0: 0, 1: 1, 2: 3}
 
 
 def write_pedestal_output(
