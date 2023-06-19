@@ -28,12 +28,17 @@ def average_pedestal(
     image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
     n_obs = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
 
+    # Handle gain mode 2 being ==3
+    real_gain_mode = gain_mode
+    if gain_mode == 2:
+        real_gain_mode = 3
+
     for j in tqdm.tqdm(
         range(s[0]), desc=progress_title or f"Gain Mode {gain_mode}", leave=False
     ):
         i = dataset[j]
         gain = numpy.right_shift(i, 14)
-        valid = gain == gain_mode
+        valid = gain == real_gain_mode
         i *= valid
         n_obs += valid
         image += i
@@ -86,7 +91,7 @@ class PedestalData(NamedTuple):
 GAIN_MODES = {
     "dynamic": 0,
     "forceswitchg1": 1,
-    "forceswitchg2": 2,
+    "forceswitchg2": 3,
 }
 
 
