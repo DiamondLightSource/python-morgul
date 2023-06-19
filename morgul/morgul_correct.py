@@ -18,7 +18,7 @@ from .config import (
     get_module_info,
     psi_gain_maps,
 )
-from .util import NC, B, G, strip_escapes
+from .util import NC, B, G, R, strip_escapes
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +212,7 @@ def correct(
 
     logger.info(f"Using mask from: {G}mask{NC}")
     print("Warning: No mask yet")
+    mask_exposures = {0.001}
 
     pedestals = PedestalCorrections(detector, pedestal)
     logger.info(f"Reading pedestals from: {B}{pedestal}{NC}")
@@ -219,20 +220,37 @@ def correct(
     # pedestals = get_pedestals(pedestal)
     maps = psi_gain_maps(detector)
 
+    available_exposures = pedestals.exposure_times & mask_exposures
+
     with contextlib.ExitStack() as stack:
         # Do a pre-pass so that we can count the total number of images
         h5s = {x: h5py.File(x, "r") for x in data_files}
         total_images = sum(x["data"].shape[0] for x in h5s.values())
         print(f"Correcting total of: {G}{total_images}{NC} images")
 
-        progress = stack.enter_context(tqdm.tqdm(total=total_images))
+        # Do validations for everything before we start correcting
+        for filename, h5 in h5s.items():
+            # Validate we can process this timestamp
+            if (exptime := h5["exptime"][()]) not in available_exposures:
+                available_str = ", ".join(f"{x*1000:g}ms" for x in available_exposures)
+                logger.error(
+                    f"{R}Error: {filename} is exposure {exptime*1000:g} ms, only: {available_str} available."
+                )
+            # Validate that the file is dynamic
+            if not (gainmode := h5["gainmode"][()]) == "dynamic":
+                logger.error(f"{R}Error: {filename} is '{gainmode}', not 'dynamic'{NC}")
+                raise typer.Abort()
 
+        # Start the correction/output process
+        progress = stack.enter_context(tqdm.tqdm(total=total_images))
         for filename, h5 in h5s.items():
             # Get the module this data was taken with
             module = get_module_info(detector, h5["column"][()], h5["row"][()])[
                 "module"
             ]
+
             data = h5["data"]
+            exposure_time = h5["exptime"]
 
             # Work out where the output file will go
             out_filename = (
@@ -243,27 +261,19 @@ def correct(
                 f"{pre_msg}{B}{filename}{NC}\n{' '*(len(strip_escapes(pre_msg))-5)}into {B}{out_filename}{NC}"
             )
 
-    return
-
-    g012 = maps[module]
-
-    output = data.parent / f"{data.stem}_corrected{data.suffix}"
-
-    assert not output.exists()
-
-    # FIXME need to add the embiggen code
-
-    with h5py.File(data, "r") as i, h5py.File(output, "w") as f:
-        r = i["data"]
-        s = r.shape
-        d = f.create_dataset(
-            "data",
-            shape=(s[0], 514, 1030),
-            dtype=numpy.int32,
-            chunks=(1, 514, 1030),
-            **hdf5plugin.Bitshuffle(lz4=True),
-        )
-        for j in tqdm.tqdm(range(s[0])):
-            raw = r[j]
-            frame = correct_frame(raw, pedestals, g012, energy)
-            d[j] = embiggen(numpy.around(frame))
+            with h5py.File(out_filename, "w") as f:
+                out_dataset = f.create_dataset(
+                    "data",
+                    shape=(data.shape[0], 514, 1030),
+                    dtype=numpy.int32,
+                    chunks=(1, 514, 1030),
+                    **hdf5plugin.Bitshuffle(lz4=True),
+                )
+                for n in tqdm.tqdm(
+                    range(data.shape[0]), leave=False, desc=f"{filename.name}"
+                ):
+                    frame = correct_frame(
+                        data[n], pedestals[exposure_time, module], maps[module], energy
+                    )
+                    progress.update(1)
+                    out_dataset[n] = embiggen(numpy.around(frame))
