@@ -307,7 +307,7 @@ def correct(
     detector = get_detector()
     logger.info(f"Using detector: {G}{detector.value}{NC}")
 
-    logger.info(f"Using mask from: {B}{mask_file}{NC}")
+    logger.info(f"Using mask from:        {B}{mask_file}{NC}")
     masker = Masker(detector, mask_file)
 
     pedestals = PedestalCorrections(detector, pedestal)
