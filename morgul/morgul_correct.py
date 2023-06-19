@@ -189,6 +189,58 @@ def output_filename(filename: Path, output_dir: Path | None) -> Path:
     ) / f"{filename.stem}_corrected{filename.suffix}"
 
 
+def datafile_prechecks(
+    data_files: list[Path], force: bool, output_dir: Path, stack: contextlib.ExitStack
+) -> dict[Path, h5py.File]:
+    """Open data files, and do basic pre-correction sanity checks"""
+    # Do a pre-pass so that we can count the total number of images
+    h5s = {}
+    total_images = 0
+    existing_output_filenames = []
+    # Go through every data file input on a first pass
+    for filename in data_files:
+        h5 = stack.enter_context(h5py.File(filename, "r"))
+        # If this file is already corrected, ignore it
+        if "data" not in h5:
+            logger.error(f"{R}Error: File {filename} does not have a 'data' dataset")
+            raise typer.Abort()
+        # If this was previously corrected, ignore it
+        if "corrected" in h5["data"].attrs and h5["data"].attrs["corrected"]:
+            logger.warning(f"{Y}File {filename} contains corrected data, ignoring.{NC}")
+            h5.close()
+            continue
+        total_images += h5["data"].shape[0]
+        h5s[filename] = h5
+        # Work out what the output filename would be
+        out = output_filename(filename, output_dir)
+        if out.is_file():
+            existing_output_filenames.append(out)
+
+    # Handle output filename existence. Do this so that we print everything
+    # that could be overwritten, instead of the first - in which case it
+    # might unexpectedly overwrite a file the user didn't expect
+    if existing_output_filenames and not force:
+        outputs = "\n".join(["  - " + str(x) for x in existing_output_filenames])
+        logger.error(
+            f"""
+{R}Error: The following files already exist and would be overwritten:
+
+{outputs}
+
+please pass --force/-f if you want to overwrite these files.{NC}
+"""
+        )
+        raise typer.Abort()
+
+    if not h5s:
+        logger.error(
+            f"{R}Error: No data files present after filtering out corrected{NC}"
+        )
+        raise typer.Abort()
+
+    return h5s
+
+
 def correct(
     pedestal: Annotated[
         Path,
@@ -233,55 +285,10 @@ def correct(
     available_exposures = pedestals.exposure_times & mask_exposures
 
     with contextlib.ExitStack() as stack:
-        # Do a pre-pass so that we can count the total number of images
-        h5s = {}
-        total_images = 0
-        existing_output_filenames = []
-        # Go through every data file input on a first pass
-        for filename in data_files:
-            h5 = stack.enter_context(h5py.File(filename, "r"))
-            # If this file is already corrected, ignore it
-            if "data" not in h5:
-                logger.error(
-                    f"{R}Error: File {filename} does not have a 'data' dataset"
-                )
-                raise typer.Abort()
-            # If this was previously corrected, ignore it
-            if "corrected" in h5["data"].attrs and h5["data"].attrs["corrected"]:
-                logger.warning(
-                    f"{Y}File {filename} contains corrected data, ignoring.{NC}"
-                )
-                h5.close()
-                continue
-            total_images += h5["data"].shape[0]
-            h5s[filename] = h5
-            # Work out what the output filename would be
-            out = output_filename(filename, output)
-            if out.is_file():
-                existing_output_filenames.append(out)
+        # Do basic cross-checks and filter out corrected files
+        h5s = datafile_prechecks(data_files, force, output, stack)
 
-        # Handle output filename existence. Do this so that we print everything
-        # that could be overwritten, instead of the first - in which case it
-        # might unexpectedly overwrite a file the user didn't expect
-        if existing_output_filenames and not force:
-            outputs = "\n".join(["  - " + str(x) for x in existing_output_filenames])
-            logger.error(
-                f"""
-{R}Error: The following files already exist and would be overwritten:
-
-{outputs}
-
-please pass --force/-f if you want to overwrite these files.{NC}
-"""
-            )
-            raise typer.Abort()
-
-        if not h5s:
-            logger.error(
-                f"{R}Error: No data files present after filtering out corrected{NC}"
-            )
-            raise typer.Abort()
-
+        total_images = sum(x["data"].shape[0] for x in h5s.values())
         print(f"Correcting total of: {G}{total_images}{NC} images")
 
         # Do validations for everything before we start correcting
