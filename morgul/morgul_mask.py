@@ -148,6 +148,7 @@ def mask(
             calls.append(
                 (
                     module,
+                    filename,
                     functools.partial(
                         _calculate,
                         h5,
@@ -163,15 +164,18 @@ def mask(
             output = output or Path(
                 f"{detector.value}_{exposure_time*1000:g}ms_mask.h5"
             )
-            h5_out = stack.enter_context(h5py.File(output, "w"))
-            # for call in tqdm.tqdm(calls, total=total_images):
-            for module, call in calls:
-                mask_data = call(
-                    parent_progress=progress, progress_desc=f" {module.strip()}"
-                )
-            if module not in h5_out:
-                h5_out.create_group(module)
-            h5_out[module].create_dataset("mask", data=mask_data)
+            with h5py.File(output, "w") as h5_out:
+                h5_out.create_dataset("exptime", data=exposure_time)
+                for module, filename, call in calls:
+                    mask_data = call(
+                        parent_progress=progress, progress_desc=f" {module.strip()}"
+                    )
+                    if module not in h5_out:
+                        h5_out.create_group(module)
+                    h5_out[module].create_dataset("mask", data=mask_data)
+                    h5_out[module]["mask"].attrs["from_flatfield"] = str(
+                        filename.resolve()
+                    )
 
         print()
         logger.info(
