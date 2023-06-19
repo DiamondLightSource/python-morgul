@@ -190,11 +190,14 @@ def correct_frame(
 ):
     """Correct pixel values to photons in frame"""
 
+    if mask is None:
+        mask = numpy.full(raw.shape, False, dtype=bool)
+
     assert 1 in pedestals and 2 in pedestals and 0 in pedestals
 
     gain = numpy.right_shift(raw, 14)
 
-    mask = mask is False
+    mask = mask == False
     m0 = (pedestals[0] != 0) * mask
     frame = ((gain == 0) * (numpy.bitwise_and(raw, 0x3FFF)) * m0 - pedestals[0]) / (
         g012[0] * energy
