@@ -10,6 +10,7 @@ from typing import Annotated, TypeAlias
 import h5py
 import napari
 import numpy as np
+import numpy.typing
 import typer
 
 from . import config
@@ -78,6 +79,38 @@ def determine_kind(root: h5py.Group) -> FileKind | None:
     return None
 
 
+def _module_transforms(
+    module: str,
+    shape: tuple[int, int],
+    offset: tuple[float, float] = (0, 0),
+) -> dict[str, tuple[float, float]]:
+    module_info = config.get_module_from_id(module)
+    # assert module in {"M418", "M420"}
+
+    translate = offset
+    scale = (-1, 1)
+
+    h, _ = shape
+
+    if module_info["position"] == "bottom":
+        translate = (translate[0] + h + 36, translate[1])
+
+    return {"scale": scale, "translate": translate}
+
+
+def _label_for_module(
+    module: str, shape: tuple[int, int], offset: tuple[float, float]
+) -> tuple[float, float]:
+    module_info = config.get_module_from_id(module)
+    h, w = shape
+
+    point_vertical = -h - 20
+    if module_info["position"] == "bottom":
+        point_vertical = h + 36 + 20
+
+    return (offset[0] + point_vertical, offset[1] + (w / 2))
+
+
 @viewer(FileKind.PEDESTAL)
 def view_pedestal(files: dict[Path, h5py.Group]) -> None:
     assert len(files) == 1, "Cannot view multiple pedestal files at once"
@@ -87,32 +120,37 @@ def view_pedestal(files: dict[Path, h5py.Group]) -> None:
     detector = config.get_detector()
     modules = config.get_known_modules_for_detector(detector)
 
-    points = []
-    point_texts = []
+    points: dict[str, tuple[float, float]] = {}
+    # point_texts = []
     for module in modules:
         for mode in 0, 1, 2:
             name = f"pedestal_{mode}"
             if name in root[module]:
                 h, w = root[module][name].shape
-                # Get the position for this module
-                module_info = config.get_module_from_id(module)
-                translate = [0, 0]
-                point_vertical = -h - 20
-                if module_info["position"] == "bottom":
-                    translate[0] = h + 36
-                    point_vertical = h + 36 + 20
-                translate[1] = mode * (w + 20)
+                # Offset this module so we show all gain modes
+                x_offset = mode * (w + 20)
+                transform = _module_transforms(
+                    module, root[module][name].shape, (0, x_offset)
+                )
+
                 viewer.add_image(
                     root[module][name][()],
                     name=f"{module}/{mode}",
-                    translate=translate,
-                    scale=(-1, 1),
+                    **transform,
                 )
-                points.append([point_vertical, mode * (w + 20) + (w / 2)])
-                point_texts.append(f"{module}/{mode}")
+                points[f"{module}/{mode}"] = _label_for_module(
+                    module, (h, w), (0, mode * (w + 20))
+                )
+
     # Convert the pointsdata to array, and add
-    point_data = np.array(points)
-    viewer.add_points(point_data, text=point_texts, size=0)
+    np.array(points)
+    pt_text = []
+    pt_data = []
+    for pt, dat in points.items():
+        print(pt, dat)
+        pt_text.append(pt)
+        pt_data.append(dat)
+    viewer.add_points(pt_data, text=pt_text, size=0)
 
     viewer.reset_view()
 
