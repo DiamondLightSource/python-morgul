@@ -24,7 +24,9 @@ def average_pedestal(
     *,
     parent_progress: tqdm.tqdm | None = None,
     progress_title: str | None = None,
-) -> tuple[numpy.typing.NDArray, numpy.typing.NDArray, numpy.typing.NDArray[bool]]:
+) -> tuple[
+    numpy.typing.NDArray, numpy.typing.NDArray, numpy.typing.NDArray[numpy.bool]
+]:
     s = dataset.shape
     image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
     n_obs = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
