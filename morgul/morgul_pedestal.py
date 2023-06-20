@@ -184,9 +184,11 @@ def pedestal(
     for filename in pedestal_runs:
         if filename.is_dir():
             expanded_runs.extend(filename.glob("*.h5"))
-        if "*" in str(filename):
+        elif "*" in str(filename):
             print(filename)
             expanded_runs.extend(Path(x) for x in glob.glob(str(filename)))
+        else:
+            expanded_runs.append(filename)
 
     if not expanded_runs:
         assert False, str(pedestal_runs)
