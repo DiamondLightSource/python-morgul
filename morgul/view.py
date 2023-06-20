@@ -91,13 +91,16 @@ def view_pedestal(filename: Path, root: h5py.Group) -> None:
                 # Get the position for this module
                 module_info = config.get_module_from_id(module)
                 translate = [0, 0]
-                point_vertical = -h - 50
+                point_vertical = -h - 20
                 if module_info["position"] == "bottom":
-                    translate[0] = -h - 36
+                    translate[0] = h + 36
                     point_vertical = h + 36 + 20
                 translate[1] = mode * (w + 20)
                 viewer.add_image(
-                    root[module][name][()], name=f"{module}/{mode}", translate=translate
+                    root[module][name][()],
+                    name=f"{module}/{mode}",
+                    translate=translate,
+                    scale=(-1, 1),
                 )
                 points.append([point_vertical, mode * (w + 20) + (w / 2)])
                 point_texts.append(f"{module}/{mode}")
