@@ -1,9 +1,11 @@
+import contextlib
 import enum
 import logging
 from collections.abc import Callable
+import operator
 from pathlib import Path
 from typing import Annotated, TypeAlias
-
+from functools import reduce
 import h5py
 import napari
 import numpy as np
@@ -24,7 +26,7 @@ class FileKind(enum.Enum):
     CORRECTED = enum.auto()
 
 
-ViewCallable: TypeAlias = Callable[[Path, h5py.Group], None]
+ViewCallable: TypeAlias = Callable[[dict[Path, h5py.Group]], None]
 view_functions: dict[FileKind, ViewCallable] = {}
 
 
@@ -76,7 +78,8 @@ def determine_kind(root: h5py.Group) -> FileKind | None:
 
 
 @viewer(FileKind.PEDESTAL)
-def view_pedestal(filename: Path, root: h5py.Group) -> None:
+def view_pedestal(files: dict[Path, h5py.Group]) -> None:
+    assert len(files) == 1
     viewer = napari.Viewer()
     detector = config.get_detector()
     modules = config.get_known_modules_for_detector(detector)
@@ -113,27 +116,43 @@ def view_pedestal(filename: Path, root: h5py.Group) -> None:
 
 @viewer(FileKind.CORRECTED)
 @viewer(FileKind.RAW)
-def view_raw(filename: Path, root: h5py.Group) -> None:
+def view_raw(files: dict[Path, h5py.Group]) -> None:
+    assert len(files) == 1
+    filename, root = next(iter(files.items()))
+
     viewer = napari.Viewer()
 
     viewer.add_image(root["data"], name=str(filename))
 
 
-def view(filename: Annotated[Path, typer.Argument(help="Data file to view")]):
+def view(filenames: Annotated[list[Path], typer.Argument(help="Data files to view")]):
     """Launch a napari-based viewer"""
 
-    with h5py.File(filename) as f:
-        kind = determine_kind(f)
-        logger.info(f"Opening {B}{filename}{NC} as {G}{kind.name.title()}{NC}")
+    with contextlib.ExitStack() as stack:
+        open_files = {path: h5py.File(path, "r") for path in filenames}
 
+        # Determine a common kind for all these files
+        common_kind = reduce(
+            operator.and_, [determine_kinds(x) for x in open_files.values()]
+        )
+        if not common_kind:
+            logger.error(
+                f"{R}Error: Could not determine common filekind for input files.{NC}"
+            )
+            raise typer.Abort()
+        kind = sorted(common_kind, key=lambda x: x.value)[-1]
+
+        list_of_files = "\n".join("  - " + str(x) for x in filenames)
         if kind is None:
             logger.error(
-                f"{R}Error: Could not determine common file kind for {filename}{NC}"
+                f"{R}Error: Could not determine common file kind for\n{list_of_files}{NC}"
             )
             raise typer.Abort()
 
+        logger.info(f"Opening:\n{B}{list_of_files}\n{NC}as {G}{kind.name.title()}{NC}")
+
         if kind in view_functions:
-            view_functions[kind](filename, f)
+            view_functions[kind](open_files)
             napari.run()
         else:
             logger.error(
