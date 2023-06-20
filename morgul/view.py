@@ -9,8 +9,6 @@ from typing import Annotated, TypeAlias
 
 import h5py
 import napari
-import numpy as np
-import numpy.typing
 import typer
 
 from . import config
@@ -85,7 +83,6 @@ def _module_transforms(
     offset: tuple[float, float] = (0, 0),
 ) -> dict[str, tuple[float, float]]:
     module_info = config.get_module_from_id(module)
-    # assert module in {"M418", "M420"}
 
     translate = offset
     scale = (-1, 1)
@@ -142,14 +139,7 @@ def view_pedestal(files: dict[Path, h5py.Group]) -> None:
                     module, (h, w), (0, mode * (w + 20))
                 )
 
-    # Convert the pointsdata to array, and add
-    np.array(points)
-    pt_text = []
-    pt_data = []
-    for pt, dat in points.items():
-        print(pt, dat)
-        pt_text.append(pt)
-        pt_data.append(dat)
+    pt_text, pt_data = zip(*points.items())
     viewer.add_points(pt_data, text=pt_text, size=0)
 
     viewer.reset_view()
