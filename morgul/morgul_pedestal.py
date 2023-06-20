@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import glob
 import time
 from logging import getLogger
 from pathlib import Path
@@ -23,7 +24,7 @@ def average_pedestal(
     *,
     parent_progress: tqdm.tqdm | None = None,
     progress_title: str | None = None,
-) -> tuple[numpy.typing.NDArray, numpy.typing.NDArray]:
+) -> tuple[numpy.typing.NDArray, numpy.typing.NDArray, numpy.typing.NDArray[bool]]:
     s = dataset.shape
     image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
     n_obs = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
@@ -37,6 +38,7 @@ def average_pedestal(
     ):
         i = dataset[j]
         gain = numpy.right_shift(i, 14)
+        i = numpy.bitwise_and(i, 0x3FFF)
         valid = gain == real_gain_mode
         i = i.astype(numpy.float64) * valid
         n_obs += valid
@@ -50,11 +52,13 @@ def average_pedestal(
     assert (
         numpy.sum(n_obs) > 0
     ), f"Error: Got completely blank pedestal in {progress_title}"
+
+    mask = n_obs == 0
     n_obs[n_obs == 0] = 1
 
     mean = image / n_obs
     variance = (image_sq / n_obs) - numpy.square(mean)
-    return mean, variance
+    return mean, variance, mask
 
 
 class PedestalData(NamedTuple):
@@ -117,7 +121,7 @@ def write_pedestal_output(
     with tqdm.tqdm(total=num_images_total, leave=False) as progress:
         for (col, row), modes in pedestal_data.items():
             for gain_mode, data in sorted(modes.items(), key=lambda x: x[0]):
-                pedestal_mean, pedestal_variance = average_pedestal(
+                pedestal_mean, pedestal_variance, pedestal_mask = average_pedestal(
                     gain_mode,
                     data.data,
                     parent_progress=progress,
@@ -139,13 +143,16 @@ def write_pedestal_output(
                 dataset = group.create_dataset(
                     f"pedestal_{gain_mode}_variance", data=pedestal_variance
                 )
+                dataset = group.create_dataset(
+                    f"pedestal_{gain_mode}_mask", data=pedestal_mask
+                )
 
 
 def pedestal(
     pedestal_runs: Annotated[
         List[Path],
         typer.Argument(
-            help="Data files containing pedestal runs. There should be a pedestal run for every gain mode."
+            help="Data files containing pedestal runs, or a folder containing h5 files for the pedestal runs. There should be a pedestal run for every gain mode."
         ),
     ],
     output: Annotated[
@@ -170,9 +177,21 @@ def pedestal(
 
     file_timestamps: set[float] = set()
 
+    # Expand any arguments passed through with wildcards
+    expanded_runs: list[Path] = []
+    for filename in pedestal_runs:
+        if filename.is_dir():
+            expanded_runs.extend(filename.glob("*.h5"))
+        if "*" in str(filename):
+            print(filename)
+            expanded_runs.extend(Path(x) for x in glob.glob(str(filename)))
+
+    if not expanded_runs:
+        assert False, str(pedestal_runs)
+
     with contextlib.ExitStack() as stack:
         # Open all pedestal files and validate we don't have any duplicate data
-        for filename in pedestal_runs:
+        for filename in expanded_runs:
             logger.debug(f"Reading {filename}")
             h5 = stack.enter_context(h5py.File(filename, "r"))
             data = PedestalData.from_h5(filename, h5, detector)
