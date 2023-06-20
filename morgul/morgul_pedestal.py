@@ -159,6 +159,8 @@ def pedestal(
 
     exposure_time: float | None = None
 
+    file_timestamps: set[float] = set()
+
     with contextlib.ExitStack() as stack:
         # Open all pedestal files and validate we don't have any duplicate data
         for filename in pedestal_runs:
@@ -166,6 +168,7 @@ def pedestal(
             h5 = stack.enter_context(h5py.File(filename, "r"))
             data = PedestalData.from_h5(filename, h5, detector)
 
+            file_timestamps.add(h5["timestamp"][()])
             gain_mode = GAIN_MODES[data.gainmode]
             if exposure_time is None:
                 exposure_time = data.exptime
@@ -199,8 +202,12 @@ def pedestal(
                 )
                 raise typer.Abort()
 
+        # Work out a timestamp name
+        timestamp_name = datetime.datetime.fromtimestamp(
+            sorted(file_timestamps)[0]
+        ).strftime("%Y-%m-%d_%H-%M-%S")
         output = output or Path(
-            f"{detector.value}_{exposure_time*1000:.0f}ms_pedestal.h5"
+            f"{detector.value}_{exposure_time*1000:.0f}ms_{timestamp_name}_pedestal.h5"
         )
         with h5py.File(output, "w") as f_output:
             write_pedestal_output(f_output, pedestal_data)
