@@ -131,8 +131,10 @@ def view_raw(files: dict[Path, h5py.Group]) -> None:
 def view(filenames: Annotated[list[Path], typer.Argument(help="Data files to view")]):
     """Launch a napari-based viewer"""
 
-    with contextlib.ExitStack():
-        open_files = {path: h5py.File(path, "r") for path in filenames}
+    with contextlib.ExitStack() as stack:
+        open_files = {
+            path: stack.enter_context(h5py.File(path, "r")) for path in filenames
+        }
 
         # Determine a common kind for all these files
         common_kind = reduce(
