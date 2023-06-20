@@ -85,7 +85,7 @@ def view_pedestal(filename: Path, root: h5py.Group) -> None:
     point_texts = []
     for module in modules:
         for mode in 0, 1, 2:
-            name = f"pedestal_{mode}_variance"
+            name = f"pedestal_{mode}"
             if name in root[module]:
                 h, w = root[module][name].shape
                 # Get the position for this module

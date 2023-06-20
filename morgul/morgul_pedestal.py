@@ -38,7 +38,7 @@ def average_pedestal(
         i = dataset[j]
         gain = numpy.right_shift(i, 14)
         valid = gain == real_gain_mode
-        i *= valid
+        i = i.astype(numpy.float64) * valid
         n_obs += valid
         image += i
         image_sq += numpy.square(i)
@@ -54,7 +54,6 @@ def average_pedestal(
 
     mean = image / n_obs
     variance = (image_sq / n_obs) - numpy.square(mean)
-    parent_progress.write(f"{progress_title}{variance}")
     return mean, variance
 
 
