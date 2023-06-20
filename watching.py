@@ -1,13 +1,15 @@
-from watcher.watcher import Watcher
+import datetime
+import logging
 import os
 import time
-import h5py
-import logging
-import typer
-from typing import Annotated, Any
 from pathlib import Path
+from typing import Annotated, Any
+
 import dateutil.tz as tz
-import datetime
+import h5py
+import typer
+
+from watcher.watcher import Watcher
 
 logger = logging.getLogger(__name__)
 

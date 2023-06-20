@@ -1,9 +1,7 @@
-import typer
-from typing import Annotated
 from pathlib import Path
+from typing import Annotated
 
-from .watcher import Watcher
-import os
+import typer
 
 
 def watch_images(
