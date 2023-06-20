@@ -81,11 +81,12 @@ def _module_transforms(
     module: str,
     shape: tuple[int, int],
     offset: tuple[float, float] = (0, 0),
+    corrected: bool = False,
 ) -> dict[str, tuple[float, float]]:
     module_info = config.get_module_from_id(module)
 
     translate = offset
-    scale = (-1, 1)
+    scale = (1, 1) if corrected else (-1, 1)
 
     h, _ = shape
 
@@ -96,7 +97,11 @@ def _module_transforms(
 
 
 def _label_for_module(
-    module: str, shape: tuple[int, int], offset: tuple[float, float]
+    module: str,
+    shape: tuple[int, int],
+    offset: tuple[float, float] = (0, 0),
+    *,
+    corrected: bool = False,
 ) -> tuple[float, float]:
     module_info = config.get_module_from_id(module)
     h, w = shape
@@ -105,6 +110,8 @@ def _label_for_module(
     if module_info["position"] == "bottom":
         point_vertical = h + 36 + 20
 
+    if corrected:
+        point_vertical += h
     return (offset[0] + point_vertical, offset[1] + (w / 2))
 
 
@@ -145,15 +152,42 @@ def view_pedestal(files: dict[Path, h5py.Group]) -> None:
     viewer.reset_view()
 
 
-@viewer(FileKind.CORRECTED)
-@viewer(FileKind.RAW)
-def view_raw(files: dict[Path, h5py.Group]) -> None:
-    assert len(files) == 1
-    filename, root = next(iter(files.items()))
+def view_image(files: dict[Path, h5py.Group], corrected: bool):
+    # assert len(files) == 1
+    # filename, root = next(iter(files.items()))
+    # assert len(files) <= 2
+    detector = config.get_detector()
 
     viewer = napari.Viewer()
 
-    viewer.add_image(root["data"], name=str(filename))
+    points: dict[str, tuple[float, float]] = {}
+
+    for h5 in files.values():
+        # Get the module for this file
+        h, w = h5["data"].shape[1:]
+        module = config.get_module_info(detector, h5["column"][()], h5["row"][()])[
+            "module"
+        ]
+        # Work out the transform
+        transform = _module_transforms(module, (h, w), corrected=corrected)
+        viewer.add_image(h5["data"], name=module, **transform)
+
+        points[f"{module}"] = _label_for_module(module, (h, w), corrected=corrected)
+
+        pt_text, pt_data = zip(*points.items())
+        viewer.add_points(pt_data, text=pt_text, size=0)
+
+    viewer.reset_view()
+
+
+@viewer(FileKind.RAW)
+def view_raw(files: dict[Path, h5py.Group]):
+    view_image(files, corrected=False)
+
+
+@viewer(FileKind.CORRECTED)
+def view_corrected(files: dict[Path, h5py.Group]):
+    view_image(files, corrected=True)
 
 
 def view(filenames: Annotated[list[Path], typer.Argument(help="Data files to view")]):
