@@ -45,7 +45,9 @@ def average_pedestal(
             parent_progress.update(1)
 
     # cope with zero valid observations
-    assert numpy.sum(n_obs) > 0, "Error: Got completely blank pedestal"
+    assert (
+        numpy.sum(n_obs) > 0
+    ), f"Error: Got completely blank pedestal in {progress_title}"
     n_obs[n_obs == 0] = 1
 
     return image / n_obs
