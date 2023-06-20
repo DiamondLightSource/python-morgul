@@ -175,7 +175,8 @@ def view_image(files: dict[Path, h5py.Group], corrected: bool):
         points[f"{module}"] = _label_for_module(module, (h, w), corrected=corrected)
 
         pt_text, pt_data = zip(*points.items())
-        viewer.add_points(pt_data, text=pt_text, size=0)
+
+    viewer.add_points(pt_data, text=pt_text, size=0)
 
     viewer.reset_view()
 
