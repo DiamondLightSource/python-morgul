@@ -23,10 +23,11 @@ def average_pedestal(
     *,
     parent_progress: tqdm.tqdm | None = None,
     progress_title: str | None = None,
-):
+) -> tuple[numpy.typing.NDArray, numpy.typing.NDArray]:
     s = dataset.shape
     image = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
     n_obs = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.uint32)
+    image_sq = numpy.zeros(shape=(s[1], s[2]), dtype=numpy.float64)
 
     # Handle gain mode 2 being ==3
     real_gain_mode = GAIN_MODE_REAL[gain_mode]
@@ -40,6 +41,7 @@ def average_pedestal(
         i *= valid
         n_obs += valid
         image += i
+        image_sq += numpy.square(i)
 
         if parent_progress:
             parent_progress.update(1)
@@ -50,7 +52,10 @@ def average_pedestal(
     ), f"Error: Got completely blank pedestal in {progress_title}"
     n_obs[n_obs == 0] = 1
 
-    return image / n_obs
+    mean = image / n_obs
+    variance = (image_sq / n_obs) - numpy.square(mean)
+    parent_progress.write(f"{progress_title}{variance}")
+    return mean, variance
 
 
 class PedestalData(NamedTuple):
@@ -113,7 +118,7 @@ def write_pedestal_output(
     with tqdm.tqdm(total=num_images_total, leave=False) as progress:
         for (col, row), modes in pedestal_data.items():
             for gain_mode, data in sorted(modes.items(), key=lambda x: x[0]):
-                pedestal = average_pedestal(
+                pedestal_mean, pedestal_variance = average_pedestal(
                     gain_mode,
                     data.data,
                     parent_progress=progress,
@@ -127,9 +132,14 @@ def write_pedestal_output(
                     group.attrs["col"] = col
 
                 group = root[data.module_serial_number]
-                dataset = group.create_dataset(f"pedestal_{gain_mode}", data=pedestal)
+                dataset = group.create_dataset(
+                    f"pedestal_{gain_mode}", data=pedestal_mean
+                )
                 dataset.attrs["timestamp"] = int(data.timestamp.timestamp())
                 dataset.attrs["filename"] = str(data.filename)
+                dataset = group.create_dataset(
+                    f"pedestal_{gain_mode}_variance", data=pedestal_variance
+                )
 
 
 def pedestal(
