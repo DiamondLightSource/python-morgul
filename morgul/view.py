@@ -111,6 +111,7 @@ def view_pedestal(filename: Path, root: h5py.Group) -> None:
     viewer.reset_view()
 
 
+@viewer(FileKind.CORRECTED)
 @viewer(FileKind.RAW)
 def view_raw(filename: Path, root: h5py.Group) -> None:
     viewer = napari.Viewer()
