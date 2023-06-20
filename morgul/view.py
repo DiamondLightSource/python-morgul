@@ -1,11 +1,12 @@
 import contextlib
 import enum
 import logging
-from collections.abc import Callable
 import operator
+from collections.abc import Callable
+from functools import reduce
 from pathlib import Path
 from typing import Annotated, TypeAlias
-from functools import reduce
+
 import h5py
 import napari
 import numpy as np
@@ -79,7 +80,9 @@ def determine_kind(root: h5py.Group) -> FileKind | None:
 
 @viewer(FileKind.PEDESTAL)
 def view_pedestal(files: dict[Path, h5py.Group]) -> None:
-    assert len(files) == 1
+    assert len(files) == 1, "Cannot view multiple pedestal files at once"
+    filename, root = next(iter(files.items()))
+
     viewer = napari.Viewer()
     detector = config.get_detector()
     modules = config.get_known_modules_for_detector(detector)
@@ -128,7 +131,7 @@ def view_raw(files: dict[Path, h5py.Group]) -> None:
 def view(filenames: Annotated[list[Path], typer.Argument(help="Data files to view")]):
     """Launch a napari-based viewer"""
 
-    with contextlib.ExitStack() as stack:
+    with contextlib.ExitStack():
         open_files = {path: h5py.File(path, "r") for path in filenames}
 
         # Determine a common kind for all these files
