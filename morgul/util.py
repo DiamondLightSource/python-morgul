@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -62,26 +62,31 @@ def _convert_ts_to_utc_datetime(ts: float | datetime) -> datetime:
 
 def _find_entry(
     kind: Literal["PEDESTAL"] | Literal["MASK"],
-    timestamp: float | datetime,
+    ts: float | datetime,
     exposure: float | None = None,
     *,
     within_minutes: int | None = None,
 ) -> Path:
-    timestamp = _convert_ts_to_utc_datetime(timestamp)
+    timestamp = _convert_ts_to_utc_datetime(ts)
     lookup = read_calibration_file(kind)
-    candidates = [x for x in sorted(lookup) if x < timestamp]
+    candidates = [
+        x for x in sorted(lookup, key=lambda x: abs((x - timestamp).total_seconds()))
+    ]
+    # from pprint import pprint
+
+    # pprint(candidates)
     if not candidates:
-        raise RuntimeError(
-            f"Could not find {kind.title()} entry taken before {timestamp}"
-        )
+        raise RuntimeError(f"Could not find {kind.title()} entry")
 
     if within_minutes is not None:
         candidates = [
-            x for x in candidates if x > timestamp - timedelta(minutes=within_minutes)
+            x
+            for x in candidates
+            if abs((x - timestamp).total_seconds()) < within_minutes * 60
         ]
         if not candidates:
             raise RuntimeError(
-                f"Could not find {kind.title()} entry taken within {within_minutes} minutes before {timestamp}"
+                f"Could not find {kind.title()} entry taken within {within_minutes} minutes"
             )
 
     if exposure is not None:
@@ -89,8 +94,8 @@ def _find_entry(
         if not candidates:
             raise RuntimeError(f"Could not find entry taken with exposure {exposure}")
 
-    # Return the latest filename
-    return lookup[candidates[-1]][1]
+    # Return the closest candidate in time
+    return lookup[candidates[0]][1]
 
 
 def find_mask(
