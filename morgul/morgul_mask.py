@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import functools
 import logging
 import time
@@ -99,6 +100,8 @@ def mask(
     pedestals = PedestalCorrections(detector, pedestal)
     logger.info(f"Reading pedestals from: {B}{pedestal}{NC}")
 
+    timestamps: set[float] = set()
+
     # Open the flat-field, and validate that they are matches
     with contextlib.ExitStack() as stack:
         # Read the data from the pedestal file
@@ -111,6 +114,7 @@ def mask(
         for filename in flat:
             h5 = stack.enter_context(h5py.File(filename, "r"))
             exptime = h5["exptime"][()]
+            timestamps.add(h5["timestamp"][()])
             # Validate that this exposure time is identical and present in the pedestal data
             if exposure_time is None:
                 exposure_time = exptime
@@ -161,8 +165,11 @@ def mask(
 
         # Run these
         with tqdm.tqdm(total=total_images, leave=False) as progress:
+            timestamp_name = datetime.datetime.fromtimestamp(
+                sorted(timestamps)[0]
+            ).strftime("%Y-%m-%d_%H-%M-%S")
             output = output or Path(
-                f"{detector.value}_{exposure_time*1000:g}ms_mask.h5"
+                f"{detector.value}_{exposure_time*1000:g}ms_{timestamp_name}_mask.h5"
             )
             with h5py.File(output, "w") as h5_out:
                 h5_out.create_dataset("exptime", data=exposure_time)
