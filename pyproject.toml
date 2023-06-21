@@ -10,7 +10,6 @@ readme = "README.md"
 license = "BSD-3-Clause"
 packages = [
     {include = "morgul"},
-    {include = "watcher"},
 ]
 include = ["morgul/morgul.ini"]
 
