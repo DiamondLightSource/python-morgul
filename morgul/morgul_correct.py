@@ -127,6 +127,7 @@ class PedestalCorrections:
 class Masker:
     filename: Path
     exposure_times: set[float]
+    _used_fudge = False
 
     def __init__(self, detector: Detector, filename: Path):
         self.filename = filename
@@ -143,6 +144,16 @@ class Masker:
                     self._table[exptime, module] = numpy.copy(f[module]["mask"])
 
     def __getitem__(self, key: tuple[float, str]) -> numpy.typing.NDArray:
+        if key not in self._table:
+            time_keys = {x[0] for x in self._table}
+            fudge_time = list(time_keys)[0]
+            if len(time_keys) == 1:
+                if not self._used_fudge:
+                    logger.warning(
+                        f"{Y}Using only time point {fudge_time} instead of {key[0]}{NC}"
+                    )
+                    self._used_fudge = True
+                return self._table[fudge_time, key[1]]
         return self._table[key]
 
     def __contains__(self, key: tuple[float, str]) -> bool:
@@ -328,9 +339,9 @@ def correct(
         for filename, h5 in h5s.items():
             # Validate we can process this timestamp
             if (exptime := h5["exptime"][()]) not in available_exposures:
-                available_str = ", ".join(f"{x*1000:g}ms" for x in available_exposures)
+                # available_str = ", ".join(f"{x*1000:g}ms" for x in available_exposures)
                 logger.error(
-                    f"{R}Error: {filename} is exposure {exptime*1000:g} ms, only: {available_str} available."
+                    f"{R}Error: {filename} is exposure {exptime*1000:g} ms, only: {masker.exposure_times} available."
                 )
             # Validate that the file is dynamic
             if not (gainmode := h5["gainmode"][()].decode()) == "dynamic":
@@ -350,10 +361,9 @@ def correct(
 
             # Check we have a mask for this module
             if (exposure_time, module) not in masker:
-                logger.error(
-                    f"{R}Error: Do not have mask for (exptime: {exposure_time*1000:g} ms, module: {module}){NC}"
+                logger.warning(
+                    f"{Y}Error: Do not have mask for (exptime: {exposure_time*1000:g} ms, module: {module}){NC}"
                 )
-                raise typer.Abort()
 
             out_filename = output_filename(filename, output)
             pre_msg = f"Processing {G}{data.shape[0]}{NC} images from module {G}{module}{NC} in "
