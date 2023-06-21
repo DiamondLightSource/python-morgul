@@ -4,6 +4,7 @@ from typing import Annotated
 import typer
 
 from . import config, morgul_correct, morgul_gainmap, morgul_mask, morgul_pedestal
+from .watcher import morgul_watch
 
 
 class NaturalOrderGroup(typer.core.TyperGroup):
@@ -57,6 +58,7 @@ try:
     app.command()(view)
 except ModuleNotFoundError:
     pass
+app.command()(morgul_watch.watch)
 
 
 def main() -> None:

@@ -11,14 +11,7 @@ import dateutil.tz as tz
 import h5py
 import typer
 
-
-def _sigpipe_handler(e):
-    logger.error("Got sigpipe error")
-
-
-signal.signal(signal.SIGPIPE, _sigpipe_handler)
-
-from watcher.watcher import Watcher
+from morgul.watcher.watcher import Watcher
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +53,7 @@ def read_h5_info(filename: Path) -> dict[str, Any] | None:
         }
 
 
-def main(
+def watch(
     verbose: Annotated[bool, typer.Option("-v", help="Verbose logging")] = False,
     logfile: Annotated[Path, typer.Option(help="Output log file")] = "watching.log",
     plain: Annotated[bool, typer.Option(help="Plain (no fzf) output")] = False,
@@ -73,6 +66,12 @@ def main(
     ] = os.environ["VISIT_DATA_ROOT"],
     use_fzf: Annotated[bool, typer.Option("--fzf")] = False,
 ):
+    """Watch a data folder for new files appearing"""
+
+    # Hack - this command wants to control logging completely
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
     # Set up the logging. Nothing to stdout unless we asked for verbose.
     # logger_dest = {} if verbose else {"filename": logfile}
     logger_dest = {"filename": logfile}
@@ -82,7 +81,7 @@ def main(
         datefmt="%Y-%m-%d %H:%M:%S",
         **logger_dest,
     )
-    logging.getLogger("watcher").setLevel(logging.INFO)
+    logging.getLogger("morgul.watcher.watcher").setLevel(logging.INFO)
 
     logger.debug(f"Starting watch on {root_path}")
     watcher = Watcher(root_path)
@@ -91,6 +90,9 @@ def main(
     unscanned_files: set[Path] = set()
     last_folder: Path | None = Path
     longest_path = 0
+
+    if not use_fzf:
+        print("Doing initial scan, this could take a minute...")
 
     if use_fzf:
         fzf = subprocess.Popen(
@@ -212,4 +214,4 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    typer.run(watch)
