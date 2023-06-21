@@ -1,11 +1,14 @@
 import contextlib
 import datetime
 import glob
+import os
+import shutil
 import time
 from logging import getLogger
 from pathlib import Path
 from typing import Annotated, List, NamedTuple, Optional
 
+import dateutil.tz as tz
 import h5py
 import numpy
 import numpy.typing
@@ -250,3 +253,19 @@ def pedestal(
         logger.info(
             f"Written output file {B}{output}{NC} in {elapsed_time_string(start_time)}."
         )
+
+    if "JUNGFRAU_CALIBRATION_LOG" in os.environ:
+        pedestal_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
+        logged_pedestal = pedestal_log.parent / output.name
+        logger.info(f"Copying {B}{output}{NC} to {B}{logged_pedestal}{NC}")
+        shutil.move(output, logged_pedestal)
+        utc_ts = datetime.datetime.fromtimestamp(sorted(file_timestamps)[0]).replace(
+            tzinfo=tz.UTC
+        )
+        log_entry = (
+            f"PEDESTAL {utc_ts.isoformat()} {exposure_time} {logged_pedestal.resolve()}"
+        )
+        logger.info(f"Writing calibration log entry:\n    {log_entry}")
+        with pedestal_log.open("a", encoding="utf-8") as f:
+            f.write(log_entry + "\n")
+        # logger.info("")

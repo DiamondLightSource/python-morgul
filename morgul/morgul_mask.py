@@ -2,10 +2,13 @@ import contextlib
 import datetime
 import functools
 import logging
+import os
+import shutil
 import time
 from pathlib import Path
 from typing import Annotated, Optional
 
+import dateutil.tz as tz
 import h5py
 import numpy
 import numpy.typing
@@ -188,3 +191,18 @@ def mask(
         logger.info(
             f"Written output file {B}{output}{NC} in {elapsed_time_string(start_time)}."
         )
+
+    if "JUNGFRAU_CALIBRATION_LOG" in os.environ:
+        calib_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
+        logged_calib = calib_log.parent / output.name
+        logger.info(f"Copying {B}{output}{NC} to {B}{logged_calib}{NC}")
+        shutil.move(output, logged_calib)
+        utc_ts = datetime.datetime.fromtimestamp(sorted(timestamps)[0]).replace(
+            tzinfo=tz.UTC
+        )
+        log_entry = (
+            f"MASK {utc_ts.isoformat()} {exposure_time} {logged_calib.resolve()}"
+        )
+        logger.info(f"Writing calibration log entry:\n    {log_entry}")
+        with calib_log.open("a", encoding="utf-8") as f:
+            f.write(log_entry + "\n")
