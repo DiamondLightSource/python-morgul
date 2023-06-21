@@ -242,7 +242,7 @@ def pedestal(
             sorted(file_timestamps)[0]
         ).strftime("%Y-%m-%d_%H-%M-%S")
         output = output or Path(
-            f"{detector.value}_{exposure_time*1000:.0f}ms_{timestamp_name}_pedestal.h5"
+            f"{detector.value}_{exposure_time*1000:g}ms_{timestamp_name}_pedestal.h5"
         )
         with h5py.File(output, "w") as f_output:
             write_pedestal_output(f_output, pedestal_data)
