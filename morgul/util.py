@@ -4,6 +4,7 @@ import os
 import re
 import time
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
@@ -30,6 +31,7 @@ def strip_escapes(input: str) -> str:
     return re.sub("\033" + r"\[[\d;]+m", "", input)
 
 
+@lru_cache
 def read_calibration_file(
     filter: Literal["PEDESTAL"] | Literal["MASK"],
 ) -> dict[datetime, tuple[float, Path]]:

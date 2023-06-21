@@ -18,7 +18,17 @@ from .config import (
     get_module_info,
     psi_gain_maps,
 )
-from .util import NC, B, G, R, Y, elapsed_time_string, strip_escapes
+from .util import (
+    NC,
+    B,
+    G,
+    R,
+    Y,
+    elapsed_time_string,
+    find_mask,
+    find_pedestal,
+    strip_escapes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -288,19 +298,28 @@ please pass --force/-f if you want to overwrite these files.{NC}
 
 
 def correct(
-    pedestal: Annotated[
-        Path,
-        typer.Argument(
-            help="Pedestal data file for the module(s), from 'morgul pedestal'."
-        ),
-    ],
-    mask_file: Annotated[Path, typer.Argument(help="Pixel mask, from 'morgul mask'.")],
     data_files: Annotated[
         list[Path], typer.Argument(help="Data files, for corrections.", metavar="DATA")
     ],
     energy: Annotated[
         float, typer.Option("-e", "--energy", help="photon energy (keV)")
     ],
+    pedestal_file: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-p",
+            "--pedestal",
+            help="Pedestal data file for the module(s), from 'morgul pedestal'. If not specified, JUNGFRAU_CALIBRATION_LOG search will be used.",
+        ),
+    ] = None,
+    mask_file: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-m",
+            "--mask",
+            help="Pixel mask, from 'morgul mask'. If not specified, JUNGFRAU_CALIBRATION_LOG will be used to find a mask.",
+        ),
+    ] = None,
     output: Annotated[
         Optional[Path],
         typer.Option(
@@ -311,6 +330,7 @@ def correct(
     force: Annotated[
         bool, typer.Option("-f", "--force", help="Overwrite files that already exist")
     ] = False,
+    lookup_tolerance: int | None = None,
 ):
     """Correction program for Jungfrau"""
 
@@ -318,31 +338,72 @@ def correct(
     detector = get_detector()
     logger.info(f"Using detector: {G}{detector.value}{NC}")
 
-    logger.info(f"Using mask from:        {B}{mask_file}{NC}")
-    masker = Masker(detector, mask_file)
-
-    pedestals = PedestalCorrections(detector, pedestal)
-    logger.info(f"Reading pedestals from: {B}{pedestal}{NC}")
-
     gain_maps = psi_gain_maps(detector)
 
-    available_exposures = pedestals.exposure_times & masker.exposure_times
+    pedestal_readers: dict[Path, PedestalCorrections] = {}
+    mask_readers: dict[Path, Masker] = {}
+    cached_pedestals = {}
+    cached_maskers = {}
 
     with contextlib.ExitStack() as stack:
         # Do basic cross-checks and filter out corrected files
         h5s = datafile_prechecks(data_files, force, output, stack)
+
+        # If given explicit pedestal/mask file, open and assign them now
+        if pedestal_file:
+            pedestal_reader = PedestalCorrections(detector, pedestal_file)
+            logger.info(f"Reading pedestals from: {B}{pedestal_file}{NC}")
+
+            for filename in data_files:
+                pedestal_readers[filename] = pedestal_reader
+        if mask_file:
+            logger.info(f"Using mask from:        {B}{mask_file}{NC}")
+            masker = Masker(detector, mask_file)
+            for filename in data_files:
+                mask_readers[filename] = masker
 
         total_images = sum(x["data"].shape[0] for x in h5s.values())
         print(f"Correcting total of: {G}{total_images}{NC} images")
 
         # Do validations for everything before we start correcting
         for filename, h5 in h5s.items():
-            # Validate we can process this timestamp
-            if (exptime := h5["exptime"][()]) not in available_exposures:
-                # available_str = ", ".join(f"{x*1000:g}ms" for x in available_exposures)
-                logger.error(
-                    f"{R}Error: {filename} is exposure {exptime*1000:g} ms, only: {masker.exposure_times} available."
+            exposure_time = h5["exptime"][()]
+            timestamp = h5["timestamp"][()]
+            if filename not in pedestal_readers:
+                # Try to find one
+                reader = find_pedestal(
+                    timestamp,
+                    exposure_time,
+                    within_minutes=lookup_tolerance,
                 )
+                if reader not in cached_pedestals:
+                    logger.info(
+                        f"Reading {G}{exposure_time*1000:g}ms{NC} pedestals from: {B}{reader}{NC}"
+                    )
+                    cached_pedestals[reader] = PedestalCorrections(detector, reader)
+
+                pedestal_readers[filename] = cached_pedestals[reader]
+            if filename not in mask_readers:
+                # Try to find one
+                reader = find_mask(
+                    timestamp,
+                    exposure_time,
+                    within_minutes=lookup_tolerance,
+                )
+                if reader not in cached_maskers:
+                    logger.info(
+                        f"Reading {G}{exposure_time*1000:g}ms{NC} mask from:        {B}{reader}{NC}"
+                    )
+                    cached_maskers[reader] = Masker(detector, reader)
+                mask_readers[filename] = cached_maskers[reader]
+
+            # Validate that the pedestal reader has this timestamp. This
+            # could happen if the user requested a specific pedestal file
+            if exposure_time not in (exps := pedestal_readers[filename].exposure_times):
+                logger.error(
+                    f"{R}Error: {filename} is exposure {exposure_time*1000:g} ms, only: {exps} available."
+                )
+
             # Validate that the file is dynamic
             if not (gainmode := h5["gainmode"][()].decode()) == "dynamic":
                 logger.error(f"{R}Error: {filename} is '{gainmode}', not 'dynamic'{NC}")
@@ -360,10 +421,10 @@ def correct(
             exposure_time = h5["exptime"][()]
 
             # Check we have a mask for this module
-            if (exposure_time, module) not in masker:
-                logger.warning(
-                    f"{Y}Error: Do not have mask for (exptime: {exposure_time*1000:g} ms, module: {module}){NC}"
-                )
+            # if (exposure_time, module) not in masker:
+            #     logger.warning(
+            #         f"{Y}Error: Do not have mask for (exptime: {exposure_time*1000:g} ms, module: {module}){NC}"
+            #     )
 
             out_filename = output_filename(filename, output)
             pre_msg = f"Processing {G}{data.shape[0]}{NC} images from module {G}{module}{NC} in "
@@ -392,10 +453,10 @@ def correct(
                 ):
                     frame = correct_frame(
                         data[n],
-                        pedestals[exposure_time, module],
+                        pedestal_readers[filename][exposure_time, module],
                         gain_maps[module],
                         energy,
-                        masker[exposure_time, module],
+                        mask_readers[filename][exposure_time, module],
                     )
                     progress.update(1)
                     out_dataset[n] = embiggen(numpy.around(frame))
