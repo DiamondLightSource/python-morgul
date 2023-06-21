@@ -179,7 +179,7 @@ def main(
                 prefix = "┏"
                 last_folder = filename.parent
 
-            dec = ["" if not use_fzf else str(data["filename"].resolve())]
+            dec = [" " if not use_fzf else str(data["filename"].resolve())]
             if not plain:
                 dec.append(prefix)
             write_output(
