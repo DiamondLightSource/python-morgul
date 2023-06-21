@@ -206,7 +206,6 @@ def main(
             except subprocess.TimeoutExpired:
                 pass
         else:
-            logger.info("Sleeping")
             time.sleep(SLEEP_TIME)
 
     # If fzf, then we might have gotten something to use
