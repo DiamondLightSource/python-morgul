@@ -1,6 +1,8 @@
 import datetime
 import logging
 import os
+import signal
+import subprocess
 import time
 from pathlib import Path
 from typing import Annotated, Any
@@ -8,8 +10,6 @@ from typing import Annotated, Any
 import dateutil.tz as tz
 import h5py
 import typer
-import signal
-import sys
 
 
 def _sigpipe_handler(e):
@@ -71,6 +71,7 @@ def main(
             help="Path to watch. Defaults to environment VISIT_DATA_ROOT",
         ),
     ] = os.environ["VISIT_DATA_ROOT"],
+    use_fzf: Annotated[bool, typer.Option("--fzf")] = False,
 ):
     # Set up the logging. Nothing to stdout unless we asked for verbose.
     # logger_dest = {} if verbose else {"filename": logfile}
@@ -91,16 +92,36 @@ def main(
     last_folder: Path | None = Path
     longest_path = 0
 
+    if use_fzf:
+        fzf = subprocess.Popen(
+            [
+                "fzf",
+                "--multi",
+                "--tac",
+                # "--ansi",
+                "--bind",
+                "tab:toggle",
+                "--with-nth=2..",
+                "--phony",
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+        )
+
+        def write_output(output: str, end="\n"):
+            if fzf.poll() is not None:
+                return
+            logger.debug(f"Writing to stdin fzf: {output}")
+            fzf.stdin.write(output + end)
+            fzf.stdin.flush()
+
+    else:
+        write_output = print
+
     while True:
         new_files, dropped_paths = watcher.scan()
         scan_time = time.monotonic()
-        # if not new_files and not dropped_paths:
-        #     logger.debug("No files, sleeping")
-        #     time.sleep(SLEEP_TIME)
-        #     continue
-
-        # if not new_files:
-        #     continue
 
         # Store a list of processed - we may want to group/reorder once we have metadata
         processed = []
@@ -147,8 +168,8 @@ def main(
                 if last_folder is not None:
                     # Tie it off
                     if not plain:
-                        print(
-                            (" " if sys.stdout.isatty() else "- ")
+                        write_output(
+                            ("- " if use_fzf else "  ")
                             + "┗"
                             + "━" * 21
                             + "┷"
@@ -158,10 +179,10 @@ def main(
                 prefix = "┏"
                 last_folder = filename.parent
 
-            dec = ["" if sys.stdout.isatty() else str(data["filename"].resolve())]
+            dec = ["" if not use_fzf else str(data["filename"].resolve())]
             if not plain:
                 dec.append(prefix)
-            print(
+            write_output(
                 " ".join(
                     [
                         *dec,
@@ -176,9 +197,18 @@ def main(
                     ]
                 )
             )
-        time.sleep(SLEEP_TIME)
+        if use_fzf:
+            try:
+                fzf.wait(timeout=SLEEP_TIME)
+                fzf_output = fzf.stdout.read()
+                logger.info("Output: " + fzf.stdout.read())
+                return
+            except subprocess.TimeoutExpired:
+                pass
+        else:
+            time.sleep(SLEEP_TIME)
 
-    # print(new_files)
+    # If fzf, then we might have gotten something to use
 
 
 if __name__ == "__main__":

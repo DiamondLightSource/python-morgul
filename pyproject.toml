@@ -35,4 +35,5 @@ build-backend = "poetry.core.masonry.api"
 ignore = ["E501", "E741", "E712"]
 line-length = 88
 select = ["C9", "E", "F", "W", "I"]
+unfixable = ["F841"]
 
