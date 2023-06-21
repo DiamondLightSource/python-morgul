@@ -170,7 +170,8 @@ def view_image(files: dict[Path, h5py.Group], corrected: bool):
         ]
         # Work out the transform
         transform = _module_transforms(module, (h, w), corrected=corrected)
-        viewer.add_image(h5["data"], name=module, **transform)
+        limits = (0, 100) if corrected else None
+        viewer.add_image(h5["data"], name=module, **transform, contrast_limits=limits)
 
         points[f"{module}"] = _label_for_module(module, (h, w), corrected=corrected)
 
