@@ -171,7 +171,13 @@ def view_image(files: dict[Path, h5py.Group], corrected: bool):
         # Work out the transform
         transform = _module_transforms(module, (h, w), corrected=corrected)
         limits = (0, 100) if corrected else None
-        viewer.add_image(h5["data"], name=module, **transform, contrast_limits=limits)
+        viewer.add_image(
+            h5["data"],
+            name=module,
+            **transform,
+            contrast_limits=limits,
+            gamma=0.4,
+        )
 
         points[f"{module}"] = _label_for_module(module, (h, w), corrected=corrected)
 
@@ -190,6 +196,36 @@ def view_raw(files: dict[Path, h5py.Group]):
 @viewer(FileKind.CORRECTED)
 def view_corrected(files: dict[Path, h5py.Group]):
     view_image(files, corrected=True)
+
+
+@viewer(FileKind.MASK)
+def view_mask(files: dict[Path, h5py.Group]):
+    assert len(files) == 1, "Cannot view multiple mask files at once"
+    filename, root = next(iter(files.items()))
+
+    viewer = napari.Viewer()
+    detector = config.get_detector()
+    modules = config.get_known_modules_for_detector(detector)
+
+    points: dict[str, tuple[float, float]] = {}
+    # point_texts = []
+    for module in modules:
+        if "mask" in root[module]:
+            h, w = root[module]["mask"].shape
+            # Offset this module so we show all gain modes
+            transform = _module_transforms(module, root[module]["mask"].shape)
+
+            viewer.add_image(
+                root[module]["mask"][()],
+                name=f"{module}",
+                **transform,
+            )
+            points[f"{module}"] = _label_for_module(module, (h, w))
+
+    pt_text, pt_data = zip(*points.items())
+    viewer.add_points(pt_data, text=pt_text, size=0)
+
+    viewer.reset_view()
 
 
 def view(filenames: Annotated[list[Path], typer.Argument(help="Data files to view")]):
