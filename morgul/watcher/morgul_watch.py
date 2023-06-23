@@ -187,7 +187,7 @@ def watch(
                 " ".join(
                     [
                         *dec,
-                        data["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
+                        data["timestamp"].astimezone().strftime("%Y-%m-%d %H:%M:%S"),
                         "│" if not plain else "",
                         str(data["filename"].relative_to(root_path)).ljust(
                             longest_path
