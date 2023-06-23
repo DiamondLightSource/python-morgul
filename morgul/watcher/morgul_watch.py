@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Callable
 
 import dateutil.tz as tz
 import h5py
@@ -80,7 +80,7 @@ def watch(
         format="%(asctime)s %(levelname)-8s %(name)s %(message)s",
         level=logging.DEBUG if verbose else logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
-        **logger_dest,
+        **logger_dest,  # type: ignore
     )
     logging.getLogger("morgul.watcher.watcher").setLevel(logging.INFO)
 
@@ -98,7 +98,7 @@ def watch(
 
     # Keep track of files we couldn't open yet, with a timestamp so we don't get stuck
     unscanned_files: set[Path] = set()
-    last_folder: Path | None = Path
+    last_folder: Path | None = None
     longest_path = 0
 
     if not use_fzf:
@@ -120,6 +120,8 @@ def watch(
             stdout=subprocess.PIPE,
             encoding="utf-8",
         )
+
+        write_output: Callable
 
         def write_output(output: str, end="\n"):
             if fzf.poll() is not None:
