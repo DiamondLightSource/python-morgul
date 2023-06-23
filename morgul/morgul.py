@@ -59,6 +59,7 @@ try:
 except ModuleNotFoundError:
     pass
 app.command()(morgul_watch.watch)
+app.command()(morgul_pedestal.pedestal_fudge)
 
 
 def main() -> None:

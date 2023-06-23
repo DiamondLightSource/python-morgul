@@ -2,6 +2,7 @@ import contextlib
 import datetime
 import glob
 import os
+import re
 import shutil
 import time
 from logging import getLogger
@@ -265,7 +266,137 @@ def pedestal(
         log_entry = (
             f"PEDESTAL {utc_ts.isoformat()} {exposure_time} {logged_pedestal.resolve()}"
         )
+        # Ensure that we don't duplicate log lines
+
         logger.info(f"Writing calibration log entry:\n    {log_entry}")
         with pedestal_log.open("a", encoding="utf-8") as f:
             f.write(log_entry + "\n")
         # logger.info("")
+
+
+def pedestal_fudge(
+    input: Annotated[
+        Path,
+        typer.Argument(
+            help="Input pedestal file, to use for generation", show_default=False
+        ),
+    ],
+    exposure: Annotated[
+        float,
+        typer.Argument(
+            help="New exposure to generate the fake-pedestal", show_default=False
+        ),
+    ],
+    force: Annotated[
+        bool, typer.Option("-f", "--force", help="Overwrite files that already exist")
+    ] = False,
+    register: Annotated[
+        bool,
+        typer.Option(
+            "--register",
+            help="Automatically copy and register this pedestal to the calibration log",
+        ),
+    ] = False,
+    output: Annotated[
+        Optional[Path],
+        typer.Option(
+            "-o",
+            help="Name for the output HDF5 file. Default: <detector>_<exptime>ms_pedestal.h5",
+        ),
+    ] = None,
+):
+    """A terrible idea. Generate new pedestal files by extrapolating the exposure times."""
+
+    detector = get_detector()
+    timestamps = set()
+
+    # Get the timestamp out of the input file
+    with h5py.File(input, "r") as fin:
+        for group in fin:
+            if not isinstance(fin[group], h5py.Group):
+                continue
+            for dset in fin[group]:
+                if not isinstance(fin[group][dset], h5py.Dataset):
+                    continue
+                if "timestamp" in fin[group][dset].attrs:
+                    timestamps.add(
+                        datetime.datetime.fromtimestamp(
+                            fin[group][dset].attrs["timestamp"]
+                        ).replace(tzinfo=tz.UTC)
+                    )
+    timestamp_name = sorted(timestamps)[0].strftime("%Y-%m-%d_%H-%M-%S")
+    # Work out what the output filename is now
+    output = output or Path(
+        f"{detector.value}_{exposure*1000:g}ms_{timestamp_name}_pedestal_fudged.h5"
+    )
+    if output.exists() and not force:
+        logger.error(
+            f"{R}Error: output file {output} already exists. Please pass --force to overwrite.{NC}"
+        )
+        raise typer.Abort()
+
+    with h5py.File(input, "r") as fin, h5py.File(output, "w") as fout:
+        exp_ratio = exposure / fin["exptime"][()]
+        print(f"Adjusting pedestals with ratio {G}{exp_ratio:.2f}{NC}")
+        # Read every module
+        for entry in fin:
+            # Copy groups
+            if isinstance(fin[entry], h5py.Group):
+                print(f"Creating output group {G}{entry}{NC}")
+                # Create the group and copy any attributes
+                g = fout.create_group(entry)
+                if fin[entry].attrs:
+                    for k, v in fin[entry].attrs.items():
+                        g.attrs[k] = v
+                # And now copy all pedestal data from inside this group
+                for dset in fin[entry]:
+                    # if dset == "pedestal_0":
+                    #     breakpoint()
+                    if not isinstance(fin[entry][dset], h5py.Dataset):
+                        continue
+                    if not re.match(r"^pedestal_\d+$", dset):
+                        continue
+
+                    logger.info(f"Copying and adjusting {G}{entry}/{dset}{NC}")
+                    data = fin[entry][dset]
+                    data = data * exp_ratio
+                    new_dset = g.create_dataset(dset, data=data)
+                    for k, v in fin[entry][dset].attrs.items():
+                        new_dset.attrs[k] = v
+
+        # Finally, write the new exposure time
+        fout.create_dataset("exptime", data=exposure)
+        fout.create_dataset("exptime_original", data=fin["exptime"][()])
+
+        logger.info(
+            f"Pedestal converted from {G}{fin['exptime'][()]*1000:g}{NC} ms to {G}{exposure*1000:g}{NC} ms and written to {B}{output}{NC}."
+        )
+        if register:
+            if "JUNGFRAU_CALIBRATION_LOG" not in os.environ:
+                logger.error(
+                    "Error: No JUNGFRAU_CALIBRATION_LOG environment variable, cannot update."
+                )
+                raise typer.Abort()
+            pedestal_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
+            logged_pedestal = pedestal_log.parent / output.name
+            if logged_pedestal.exists() and not force:
+                logger.error(
+                    f"{R}Error: Output file {logged_pedestal} already exists. Pass --force to overwrite.{NC}"
+                )
+                raise typer.Abort()
+
+            logger.info(f"Copying {B}{output}{NC} to {B}{logged_pedestal}{NC}")
+            shutil.move(output, logged_pedestal)
+            utc_ts = sorted(timestamps)[0]
+            log_entry = (
+                f"PEDESTAL {utc_ts.isoformat()} {exposure} {logged_pedestal.resolve()}"
+            )
+            # Check this line does not exist already
+            if log_entry in pedestal_log.read_text():
+                logger.info(
+                    "Not updating calibration log as identical entry already exists."
+                )
+            else:
+                logger.info(f"Writing calibration log entry:\n    {log_entry}")
+                with pedestal_log.open("a", encoding="utf-8") as f:
+                    f.write(log_entry + "\n")
