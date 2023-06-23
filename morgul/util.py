@@ -34,20 +34,20 @@ def strip_escapes(input: str) -> str:
 @lru_cache
 def read_calibration_file(
     filter: Literal["PEDESTAL"] | Literal["MASK"],
-) -> dict[datetime, tuple[float, Path]]:
+) -> dict[tuple[datetime, float], Path]:
     """Read the calibration log (if it exists) and get all entries"""
     if "JUNGFRAU_CALIBRATION_LOG" not in os.environ:
         raise RuntimeError(
             "Could not find calibration log; please set JUNGFRAU_CALIBRATION_LOG"
         )
 
-    entries: dict[datetime, tuple[float, Path]] = {}
+    entries: dict[tuple[datetime, float], Path] = {}
     for line in Path(os.environ["JUNGFRAU_CALIBRATION_LOG"]).read_text().splitlines():
         if not line.startswith(filter):
             continue
         _, ts, exposure, filename = line.split()
         timestamp = datetime.fromisoformat(ts)
-        entries[timestamp] = (float(exposure), Path(filename))
+        entries[timestamp, float(exposure)] = Path(filename)
     return entries
 
 
@@ -72,7 +72,10 @@ def _find_entry(
     timestamp = _convert_ts_to_utc_datetime(ts)
     lookup = read_calibration_file(kind)
     candidates = [
-        x for x in sorted(lookup, key=lambda x: abs((x - timestamp).total_seconds()))
+        (t, e)
+        for t, e in sorted(
+            lookup, key=lambda x: abs((x[0] - timestamp).total_seconds())
+        )
     ]
     # from pprint import pprint
 
@@ -82,9 +85,9 @@ def _find_entry(
 
     if within_minutes is not None:
         candidates = [
-            x
-            for x in candidates
-            if abs((x - timestamp).total_seconds()) < within_minutes * 60
+            (t, e)
+            for t, e in candidates
+            if abs((t - timestamp).total_seconds()) < within_minutes * 60
         ]
         if not candidates:
             raise RuntimeError(
@@ -92,12 +95,14 @@ def _find_entry(
             )
 
     if exposure is not None:
-        candidates = [x for x in candidates if lookup[x][0] == exposure]
+        candidates = [(t, e) for t, e in candidates if abs(e - exposure) < 1e-9]
         if not candidates:
-            raise RuntimeError(f"Could not find entry taken with exposure {exposure}")
+            raise RuntimeError(
+                f"Could not find {kind.title()} entry taken with exposure {exposure}"
+            )
 
     # Return the closest candidate in time
-    return lookup[candidates[0]][1]
+    return lookup[candidates[0]]
 
 
 def find_mask(
