@@ -112,11 +112,22 @@ class PedestalCorrections:
         self, key: float | tuple[float] | tuple[float, str] | tuple[float, str, int]
     ):
         output: Any = {}
+        try:
+            if isinstance(key, float):
+                e_in = key
+            else:
+                e_in = key[0]
+            exact_exptime = [x for x in self.exposure_times if abs(e_in - x) < 1e-9][0]
+        except IndexError:
+            raise KeyError(f"No exposure time entry in pedestal matching {key}")
+
         if isinstance(key, float):
             key = (key,)
         if len(key) == 1:
             # Get all entries for one exposure time
-            for module, gainmode in [(m, g) for e, m, g in self._tables if e == key[0]]:
+            for module, gainmode in [
+                (m, g) for e, m, g in self._tables if e == exact_exptime
+            ]:
                 output.setdefault(module, dict())[gainmode] = self._tables[
                     key[0], module, gainmode
                 ]
@@ -124,13 +135,12 @@ class PedestalCorrections:
             # Get all entries for one exposure time
             key = cast(tuple[float, str], key)
             for gainmode in [
-                g for e, m, g in self._tables if e == key[0] and m == key[1]
+                g for e, m, g in self._tables if e == exact_exptime and m == key[1]
             ]:
                 # output.setdefault(module, dict())[gainmode] = self._tables(key, module, gainmode)
-                output[gainmode] = self._tables[key[0], key[1], gainmode]
+                output[gainmode] = self._tables[exact_exptime, key[1], gainmode]
         elif len(key) == 3:
-            # assert isinstance(key, tuple)
-            return self._tables[cast(tuple[float, str, int], key)]
+            return self._tables[exact_exptime, key[1], key[2]]  # type: ignore
         return output
 
 
