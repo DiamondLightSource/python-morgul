@@ -147,7 +147,7 @@ def watch(
                     *[
                         len(str(p.relative_to(root_path)))
                         for p in new_files
-                        if len(str(p.relative_to(root_path))) <= 90
+                        if len(str(p.relative_to(root_path))) <= 88
                     ],
                 )
                 logger.debug(f"Longest path is now: {longest_path}")
