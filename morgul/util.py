@@ -106,9 +106,7 @@ def find_mask(
     *,
     within_minutes: int | None = None,
 ) -> Path | None:
-    return _find_entry(
-        "MASK", timestamp_utc, exposure_time, within_minutes=within_minutes
-    )
+    return _find_entry("MASK", timestamp_utc, None, within_minutes=within_minutes)
 
 
 def find_pedestal(
