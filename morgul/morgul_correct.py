@@ -147,7 +147,6 @@ class PedestalCorrections:
 class Masker:
     filename: Path
     exposure_times: set[float]
-    _used_fudge = False
 
     def __init__(self, detector: Detector, filename: Path):
         self.filename = filename
@@ -168,11 +167,6 @@ class Masker:
             time_keys = {x[0] for x in self._table}
             fudge_time = list(time_keys)[0]
             if len(time_keys) == 1:
-                if not self._used_fudge:
-                    logger.warning(
-                        f"{Y}Using only time point {fudge_time} instead of {key[0]}{NC}"
-                    )
-                    self._used_fudge = True
                 return self._table[fudge_time, key[1]]
         return self._table[key]
 
@@ -410,8 +404,18 @@ def correct(
             # Validate that the pedestal reader has this timestamp. This
             # could happen if the user requested a specific pedestal file
             if exposure_time not in (exps := pedestal_readers[filename].exposure_times):
+                availables = ", ".join(f"{x*1000:g}" for x in exps)
                 logger.error(
-                    f"{R}Error: {filename} is exposure {exposure_time*1000:g} ms, only: {exps} available."
+                    f"{R}Error: {filename} is exposure {exposure_time*1000:g} ms, only: {availables} ms available."
+                )
+                raise typer.Abort()
+
+            # Validate that the mask reader has this exposure time. This
+            # is not an error, but we do want to print the user a warning
+            if exposure_time not in (exps := mask_readers[filename].exposure_times):
+                availables = ", ".join(f"{x*1000:g}" for x in exps)
+                logger.warning(
+                    f"{Y}Warning: Using masker time point {availables}ms instead of {exposure_time*1000:g}ms{NC}"
                 )
 
             # Validate that the file is dynamic
