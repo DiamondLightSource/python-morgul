@@ -2,9 +2,11 @@ import datetime
 import logging
 import os
 import subprocess
+import sys
 import time
+from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Any, Callable
+from typing import IO, Annotated, Any
 
 import dateutil.tz as tz
 import h5py
@@ -20,6 +22,15 @@ FILTER_REGEX = r".+\.h5"
 CACHE_FILE = ".watcher_history"
 # Time to sleep between scans
 SLEEP_TIME = 5
+
+
+class Settings:
+    root_path: Path
+
+    @classmethod
+    @lru_cache
+    def get(cls) -> "Settings":
+        return cls()
 
 
 def read_h5_info(filename: Path) -> dict[str, Any] | None:
@@ -52,8 +63,81 @@ def read_h5_info(filename: Path) -> dict[str, Any] | None:
         }
 
 
+class EmitHandler:
+    _entries: dict[Path, dict[str, Any]]
+    _last_folder: Path | None = None
+    _output_stream: IO
+    _longest_path: int
+
+    def __init__(self, output_stream: IO = sys.stdout, *, fzf: bool = False):
+        self._entries = {}
+        self._fzf = fzf
+        self._output_stream = output_stream
+        self._longest_path = 0
+
+    def set_output_stream(self, stream: IO) -> None:
+        self._output_stream = stream
+
+    def print(self, *args, sep: str = " ", end: str = "\n") -> None:
+        self._output_stream.write(sep.join(str(x) for x in args) + end)
+
+    def emit_new_entries(self, entries: list[dict[str, Any]]) -> None:
+        # Check to see if we need to extend the longest path for these
+        self._longest_path = max(
+            self._longest_path,
+            *[
+                len(str(x["filename"].relative_to(Settings.get().root_path)))
+                for x in entries
+            ],
+        )
+
+        path_length = min(self._longest_path, 87)
+
+        for entry in sorted(entries, key=lambda x: x["timestamp"]):
+            # For now, just emit the lines
+            filename = entry["filename"]
+            # Handle unicode prettiness
+            prefix = "┃"
+            # Handle dividers if our new entry is in a different folder
+            if filename.parent != self._last_folder:
+                if self._last_folder is not None:
+                    # Tie it off
+                    self.print(
+                        ("- " if self._fzf else "  ")
+                        + "┗"
+                        + "━" * 21
+                        + "┷"
+                        + "━" * (path_length + 27)
+                        + "┛"
+                    )
+                prefix = "┏"
+                self._last_folder = filename.parent
+
+            dec = [" " if not self._fzf else str(entry["filename"].resolve()), prefix]
+            self.print(
+                *dec,
+                entry["timestamp"].astimezone().strftime("%Y-%m-%d %H:%M:%S"),
+                "│",
+                str(entry["filename"].relative_to(Settings.get().root_path)).ljust(
+                    path_length
+                ),
+                entry["gainmode"].ljust(13),
+                f"{entry['exptime']*1000:4g}ms",
+                str(entry["nimage"]).ljust(5),
+            )
+
+    def reemit(self) -> None:
+        """Print everything again"""
+        raise NotImplementedError()
+
+
 def watch(
-    verbose: Annotated[bool, typer.Option("-v", help="Verbose logging")] = False,
+    verbose: Annotated[
+        int,
+        typer.Option(
+            "-v", help="Verbose logging. Pass twice to log to stdout.", count=True
+        ),
+    ] = 0,
     logfile: Annotated[Path, typer.Option(help="Output log file")] = Path(
         "watching.log"
     ),
@@ -69,13 +153,14 @@ def watch(
 ):
     """Watch a data folder for new files appearing"""
 
-    # Hack - this command wants to control logging completely
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
+    # This command wants to control logging completely but the root
+    # morgul object sets up logging itself, so we want to undo what it
+    # did.
+    for loghandler in logging.root.handlers[:]:
+        logging.root.removeHandler(loghandler)
 
     # Set up the logging. Nothing to stdout unless we asked for verbose.
-    # logger_dest = {} if verbose else {"filename": logfile}
-    logger_dest = {"filename": logfile}
+    logger_dest = {"filename": logfile} if verbose < 2 else {}
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(name)s %(message)s",
         level=logging.DEBUG if verbose else logging.INFO,
@@ -93,13 +178,14 @@ def watch(
             )
             raise typer.Abort()
 
+    # Update the singleton root object
+    Settings.get().root_path = root_path
+
     logger.debug(f"Starting watch on {root_path}")
     watcher = Watcher(root_path)
 
     # Keep track of files we couldn't open yet, with a timestamp so we don't get stuck
     unscanned_files: set[Path] = set()
-    last_folder: Path | None = None
-    longest_path = 0
 
     if not use_fzf:
         print("Doing initial scan, this could take a minute...")
@@ -120,18 +206,9 @@ def watch(
             stdout=subprocess.PIPE,
             encoding="utf-8",
         )
-
-        write_output: Callable
-
-        def write_output(output: str, end="\n"):
-            if fzf.poll() is not None:
-                return
-            logger.debug(f"Writing to stdin fzf: {output}")
-            fzf.stdin.write(output + end)
-            fzf.stdin.flush()
-
+        handler = EmitHandler(fzf.stdin, fzf=True)
     else:
-        write_output = print
+        handler = EmitHandler(sys.stdout)
 
     while True:
         new_files, dropped_paths = watcher.scan()
@@ -153,64 +230,10 @@ def watch(
             except (IOError, KeyError):
                 unscanned_files.add(filename)
                 continue
-            # See if we need to update the "longest path"
-            try:
-                longest_path = max(
-                    longest_path or 0,
-                    *[
-                        len(str(p.relative_to(root_path)))
-                        for p in new_files
-                        if len(str(p.relative_to(root_path))) <= 87
-                    ],
-                )
-                logger.debug(f"Longest path is now: {longest_path}")
 
-            except TypeError:
-                # This is fragile to missing paths
-                pass
+        if processed:
+            handler.emit_new_entries(processed)
 
-            # for ts, missed_file in list(unscanned_files.items()):
-            #     if missed_file == filename:
-            #         del unscanned_files[ts]
-
-        # For now, just emit the lines
-        for data in sorted(processed, key=lambda x: x["timestamp"]):
-            filename = data["filename"]
-            # Handle unicode prettiness
-            prefix = "┃"
-            if filename.parent != last_folder:
-                if last_folder is not None:
-                    # Tie it off
-                    if not plain:
-                        write_output(
-                            ("- " if use_fzf else "  ")
-                            + "┗"
-                            + "━" * 21
-                            + "┷"
-                            + "━" * (longest_path + 27)
-                            + "┛"
-                        )
-                prefix = "┏"
-                last_folder = filename.parent
-
-            dec = [" " if not use_fzf else str(data["filename"].resolve())]
-            if not plain:
-                dec.append(prefix)
-            write_output(
-                " ".join(
-                    [
-                        *dec,
-                        data["timestamp"].astimezone().strftime("%Y-%m-%d %H:%M:%S"),
-                        "│" if not plain else "",
-                        str(data["filename"].relative_to(root_path)).ljust(
-                            longest_path
-                        ),
-                        data["gainmode"].ljust(13),
-                        f"{data['exptime']*1000:4g}ms",
-                        str(data["nimage"]).ljust(5),
-                    ]
-                )
-            )
         if use_fzf:
             try:
                 fzf.wait(timeout=SLEEP_TIME)
