@@ -64,6 +64,9 @@ class PedestalCorrections:
     def exposure_times(self):
         return set(x for x, _, _ in self._tables)
 
+    def has_exposure(self, exposure: float) -> bool:
+        return any(abs(x - exposure) < 1e-9 for x, _, _ in self._tables)
+
     def get_pedestal(
         self, exposure_time: float, module: str, gain_mode: int
     ) -> numpy.typing.NDArray:
@@ -403,8 +406,10 @@ def correct(
 
             # Validate that the pedestal reader has this timestamp. This
             # could happen if the user requested a specific pedestal file
-            if exposure_time not in (exps := pedestal_readers[filename].exposure_times):
-                availables = ", ".join(f"{x*1000:g}" for x in exps)
+            if not pedestal_readers[filename].has_exposure(exposure_time):
+                availables = ", ".join(
+                    f"{x*1000:g}" for x in pedestal_readers[filename].exposure_times
+                )
                 logger.error(
                     f"{R}Error: {filename} is exposure {exposure_time*1000:g} ms, only: {availables} ms available."
                 )
