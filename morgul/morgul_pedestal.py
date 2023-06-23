@@ -371,32 +371,33 @@ def pedestal_fudge(
         logger.info(
             f"Pedestal converted from {G}{fin['exptime'][()]*1000:g}{NC} ms to {G}{exposure*1000:g}{NC} ms and written to {B}{output}{NC}."
         )
-        if register:
-            if "JUNGFRAU_CALIBRATION_LOG" not in os.environ:
-                logger.error(
-                    "Error: No JUNGFRAU_CALIBRATION_LOG environment variable, cannot update."
-                )
-                raise typer.Abort()
-            pedestal_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
-            logged_pedestal = pedestal_log.parent / output.name
-            if logged_pedestal.exists() and not force:
-                logger.error(
-                    f"{R}Error: Output file {logged_pedestal} already exists. Pass --force to overwrite.{NC}"
-                )
-                raise typer.Abort()
 
-            logger.info(f"Copying {B}{output}{NC} to {B}{logged_pedestal}{NC}")
-            shutil.move(output, logged_pedestal)
-            utc_ts = sorted(timestamps)[0]
-            log_entry = (
-                f"PEDESTAL {utc_ts.isoformat()} {exposure} {logged_pedestal.resolve()}"
+    if register:
+        if "JUNGFRAU_CALIBRATION_LOG" not in os.environ:
+            logger.error(
+                "Error: No JUNGFRAU_CALIBRATION_LOG environment variable, cannot update."
             )
-            # Check this line does not exist already
-            if log_entry in pedestal_log.read_text():
-                logger.info(
-                    "Not updating calibration log as identical entry already exists."
-                )
-            else:
-                logger.info(f"Writing calibration log entry:\n    {log_entry}")
-                with pedestal_log.open("a", encoding="utf-8") as f:
-                    f.write(log_entry + "\n")
+            raise typer.Abort()
+        pedestal_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
+        logged_pedestal = pedestal_log.parent / output.name
+        if logged_pedestal.exists() and not force:
+            logger.error(
+                f"{R}Error: Output file {logged_pedestal} already exists. Pass --force to overwrite.{NC}"
+            )
+            raise typer.Abort()
+
+        logger.info(f"Copying {B}{output}{NC} to {B}{logged_pedestal}{NC}")
+        shutil.move(output, logged_pedestal)
+        utc_ts = sorted(timestamps)[0]
+        log_entry = (
+            f"PEDESTAL {utc_ts.isoformat()} {exposure} {logged_pedestal.resolve()}"
+        )
+        # Check this line does not exist already
+        if log_entry in pedestal_log.read_text():
+            logger.info(
+                "Not updating calibration log as identical entry already exists."
+            )
+        else:
+            logger.info(f"Writing calibration log entry:\n    {log_entry}")
+            with pedestal_log.open("a", encoding="utf-8") as f:
+                f.write(log_entry + "\n")
