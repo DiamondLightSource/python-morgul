@@ -54,7 +54,9 @@ def read_h5_info(filename: Path) -> dict[str, Any] | None:
 
 def watch(
     verbose: Annotated[bool, typer.Option("-v", help="Verbose logging")] = False,
-    logfile: Annotated[Path, typer.Option(help="Output log file")] = "watching.log",
+    logfile: Annotated[Path, typer.Option(help="Output log file")] = Path(
+        "watching.log"
+    ),
     plain: Annotated[bool, typer.Option(help="Plain (no fzf) output")] = False,
     root_path: Annotated[
         Path,
@@ -62,7 +64,7 @@ def watch(
             metavar="PATH",
             help="Path to watch. Defaults to environment VISIT_DATA_ROOT",
         ),
-    ] = os.environ["VISIT_DATA_ROOT"],
+    ] = None,
     use_fzf: Annotated[bool, typer.Option("--fzf")] = False,
 ):
     """Watch a data folder for new files appearing"""
@@ -81,6 +83,15 @@ def watch(
         **logger_dest,
     )
     logging.getLogger("morgul.watcher.watcher").setLevel(logging.INFO)
+
+    if root_path is None:
+        if "VISIT_DATA_ROOT" in os.environ:
+            root_path = Path(os.environ["VISIT_DATA_ROOT"])
+        else:
+            print(
+                "Error: Have not specified root_path and VISIT_DATA_ROOT not set. Please do one of these."
+            )
+            raise typer.Abort()
 
     logger.debug(f"Starting watch on {root_path}")
     watcher = Watcher(root_path)
