@@ -150,7 +150,7 @@ def watch(
                 if filename in unscanned_files:
                     unscanned_files.remove(filename)
 
-            except IOError:
+            except (IOError, KeyError):
                 unscanned_files.add(filename)
                 continue
             # See if we need to update the "longest path"
