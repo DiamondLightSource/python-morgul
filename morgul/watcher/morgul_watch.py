@@ -19,8 +19,8 @@ from morgul.watcher.watcher import Watcher
 logger = logging.getLogger(__name__)
 
 # Only consider files matching
-FILTER_REGEX = r".+\.h5"
-# FILTER_REGEX = r".+2023-06-26.+\/.+\.h5|/+ssx"
+# FILTER_REGEX = r".+\.h5"
+FILTER_REGEX = r".+2023-06-26.+\/.+\.h5|.+260623\/.+\.h5"
 
 # A cache file so that we can quickly re-present results
 CACHE_FILE = ".watcher_history"
@@ -76,11 +76,11 @@ class EmitHandler:
 
     def __init__(self, output_stream: IO = sys.stdout, *, fzf: bool = False):
         self._entries = {}
-        self._entry_order = []
+        self._entry_order: list[Path] = []
         self._fzf = fzf
         self._output_stream = output_stream
         self._longest_path = 0
-        self._lines_to_update = set()
+        # self._lines_to_update = set()
 
     def set_output_stream(self, stream: IO) -> None:
         self._output_stream = stream
@@ -89,7 +89,19 @@ class EmitHandler:
         self._output_stream.write(sep.join(str(x) for x in args) + end)
 
     def _generate_entry_line(self, entry: dict[str, Any]) -> str:
-        path_length = min(self._longest_path, 87)
+        MAX_WIDTH, _ = os.get_terminal_size()
+
+        # pre-filename=26
+        # gain_mode=13+ =14
+        # ms=4+ = 5
+        # n_image=6+ =7
+        #    post = 26
+        max_path_length = MAX_WIDTH - 26 - 26 - 2
+        path_length = min(self._longest_path, 87, max_path_length)
+        # Let's not be crazy
+        if path_length < 20:
+            path_length = 20
+
         filename = entry["filename"].resolve()
         # Handle unicode prettiness
         prefix = "┃"
@@ -110,6 +122,28 @@ class EmitHandler:
 
         dec = [" " if not self._fzf else str(entry["filename"].resolve()), prefix]
         # if filename in self._entry_order:
+
+        # Work out how to show the filename with maximum length
+        filename_trunc = str(filename.relative_to(Settings.get().root_path)).ljust(
+            path_length
+        )
+        if len(filename_trunc) > path_length:
+            # Try subtracting from the name, not the folder name
+            # root_path = entry["filename"].relative_to(Settings.get().root_path).parent()
+            if len(filename_trunc) - len(filename.name) + 3 > path_length:
+                # Too long, even when truncated. Just cut down the whole hting
+                filename_trunc = filename_trunc[: path_length - 3] + "..."
+            else:
+                shorten_by = len(filename_trunc) - path_length + 3
+                new_filename = "..." + filename.name[shorten_by:]
+                logger.info(
+                    f"Truncating '{filename_trunc}' to shorten by {shorten_by=}, {path_length=}, {len(filename_trunc)=} into {new_filename=} ({len(new_filename)=}), {MAX_WIDTH=}"
+                )
+
+                filename_trunc = str(
+                    filename.parent.relative_to(Settings.get().root_path) / new_filename
+                ).ljust(path_length)
+
         # Manage the colour
         if entry["bad"]:
             # We want to only show partial information
@@ -121,10 +155,7 @@ class EmitHandler:
                         + entry["timestamp"].astimezone().strftime("%Y-%m-%d %H:%M:%S")
                         + NC,
                         "│",
-                        R
-                        + str(
-                            entry["filename"].relative_to(Settings.get().root_path)
-                        ).ljust(path_length),
+                        R + filename_trunc,
                         # entry["reason"] + NC,
                     ]
                 )
@@ -137,12 +168,10 @@ class EmitHandler:
                 *dec,
                 entry["timestamp"].astimezone().strftime("%Y-%m-%d %H:%M:%S"),
                 "│",
-                str(entry["filename"].relative_to(Settings.get().root_path)).ljust(
-                    path_length
-                ),
+                filename_trunc,
                 entry["gainmode"].ljust(13),
                 f"{entry['exptime']*1000:4g}ms",
-                str(entry["nimage"]).ljust(5),
+                str(entry["nimage"]).ljust(6),
             ]
         )
 
