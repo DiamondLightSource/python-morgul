@@ -19,6 +19,8 @@ def main(
     entries: dict[datetime.datetime, dict] = {}
     for filename in itertools.chain(*[x.glob("**/*.h5") for x in target_folders]):
         try:
+            if "corrected" in filename.name:
+                continue
             with h5py.File(filename, "r") as f:
                 if "timestamp" not in f:
                     print(
