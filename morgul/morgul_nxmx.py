@@ -497,8 +497,8 @@ def nxmx(
         type="CCD",
         x_pixel_size=pint.Quantity(75, "microns"),
         y_pixel_size=pint.Quantity(75, "microns"),
-        beam_center_x=pint.Quantity(515, "pixels"),
-        beam_center_y=pint.Quantity(257, "pixels"),
+        beam_center_x=pint.Quantity(558, "pixels"),
+        beam_center_y=pint.Quantity(111, "pixels"),
         sensor_material="Si",
         sensor_thickness=pint.Quantity(320, "microns"),
         distance=detector_distance,
@@ -583,7 +583,7 @@ def nxmx(
 
     root.entry.instrument.beam = NXbeam(
         incident_wavelength=pint.Quantity(
-            1,
+            0.99987,
             units="angstrom",
         )
     )
@@ -602,4 +602,4 @@ def nxmx(
 
 
 if __name__ == "__main__":
-    nxmx()
+    typer.run(nxmx)
