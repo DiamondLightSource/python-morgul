@@ -3,7 +3,14 @@ from typing import Annotated
 
 import typer
 
-from . import config, morgul_correct, morgul_gainmap, morgul_mask, morgul_pedestal
+from . import (
+    config,
+    morgul_correct,
+    morgul_gainmap,
+    morgul_mask,
+    morgul_nxmx,
+    morgul_pedestal,
+)
 from .watcher import morgul_watch
 
 
@@ -60,6 +67,7 @@ except ModuleNotFoundError:
     pass
 app.command()(morgul_watch.watch)
 app.command()(morgul_pedestal.pedestal_fudge)
+app.command()(morgul_nxmx.nxmx)
 
 
 def main() -> None:
