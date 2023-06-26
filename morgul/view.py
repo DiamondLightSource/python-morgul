@@ -176,7 +176,7 @@ def view_image(files: dict[Path, h5py.Group], corrected: bool):
             name=module,
             **transform,
             contrast_limits=limits,
-            gamma=0.4,
+            gamma=0.3,
         )
 
         points[f"{module}"] = _label_for_module(module, (h, w), corrected=corrected)
