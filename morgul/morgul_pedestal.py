@@ -165,7 +165,8 @@ def pedestal(
         Optional[Path],
         typer.Option(
             "-o",
-            help="Name for the output HDF5 file. Default: <detector>_<exptime>ms_pedestal.h5",
+            help="Name for the output HDF5 file. [default: (detector)_(exptime)ms_(timestamp)_pedestal.h5]",
+            show_default=False,
         ),
     ] = None,
     register_calibration: Annotated[
