@@ -168,6 +168,13 @@ def pedestal(
             help="Name for the output HDF5 file. Default: <detector>_<exptime>ms_pedestal.h5",
         ),
     ] = None,
+    register_calibration: Annotated[
+        bool,
+        typer.Option(
+            "--register",
+            help="Copy the pedestal file and register in the central calibration log (pointed to by the JUNGFRAU_CALIBRATION_LOG environment variable)",
+        ),
+    ] = False,
 ):
     """
     Calibration setup for Jungfrau
@@ -255,7 +262,7 @@ def pedestal(
             f"Written output file {B}{output}{NC} in {elapsed_time_string(start_time)}."
         )
 
-    if "JUNGFRAU_CALIBRATION_LOG" in os.environ:
+    if "JUNGFRAU_CALIBRATION_LOG" in os.environ and register_calibration:
         pedestal_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
         logged_pedestal = pedestal_log.parent / output.name
         logger.info(f"Copying {B}{output}{NC} to {B}{logged_pedestal}{NC}")
@@ -272,6 +279,11 @@ def pedestal(
         with pedestal_log.open("a", encoding="utf-8") as f:
             f.write(log_entry + "\n")
         # logger.info("")
+    elif register_calibration:
+        logger.error(
+            f"{R}Error: Have generated calibration {output.name} but cannot register as JUNGFRAU_CALIBRATION_LOG is not set."
+        )
+        raise typer.Abort()
 
 
 def pedestal_fudge(
