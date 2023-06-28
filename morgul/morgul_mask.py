@@ -71,25 +71,41 @@ def mask(
     pedestal: Annotated[
         Path,
         typer.Argument(
-            help="Pedestal data file for the module(s), from 'morgul pedestal'. Used when correcting in order to calculate the mask."
+            help="Pedestal data file for the module(s), from 'morgul pedestal'. Used when correcting in order to calculate the mask.",
+            show_default=False,
         ),
     ],
     flat: Annotated[
         list[Path],
         typer.Argument(
-            help="Flat-field data to use for mask generation. Multiple modules for a single exposure time can be passed, but must be present in the pedestal file."
+            help="Flat-field data to use for mask generation. Multiple modules for a single exposure time can be passed, but must be present in the pedestal file.",
+            show_default=False,
         ),
     ],
     energy: Annotated[
-        float, typer.Option("-e", "--energy", help="photon energy (keV)")
+        float,
+        typer.Option(
+            "-e",
+            "--energy",
+            help="photon energy (keV)",
+            show_default=False,
+        ),
     ],
     output: Annotated[
         Optional[Path],
         typer.Option(
             "-o",
             help="Name for the output HDF5 file. Default: <detector>_<exptime>ms_mask.h5",
+            show_default=False,
         ),
     ] = None,
+    register_calibration: Annotated[
+        bool,
+        typer.Option(
+            "--register",
+            help="Copy the pedestal file and register in the central calibration log (pointed to by the JUNGFRAU_CALIBRATION_LOG environment variable)",
+        ),
+    ] = False,
 ):
     """Calculate a pixel mask from flatfield data."""
     start_time = time.monotonic()
@@ -193,7 +209,7 @@ def mask(
             f"Written output file {B}{output}{NC} in {elapsed_time_string(start_time)}."
         )
 
-    if "JUNGFRAU_CALIBRATION_LOG" in os.environ:
+    if "JUNGFRAU_CALIBRATION_LOG" in os.environ and register_calibration:
         calib_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
         logged_calib = calib_log.parent / output.name
         logger.info(f"Copying {B}{output}{NC} to {B}{logged_calib}{NC}")
