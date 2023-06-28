@@ -16,3 +16,6 @@ ENV/*
 
 # Python
 __pycache__/
+
+.vscode/
+_build/
