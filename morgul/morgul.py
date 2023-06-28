@@ -4,7 +4,8 @@ import sys
 from typing import Annotated
 
 import typer
-from rich import print
+
+from morgul.util import BOLD, NC, R, Y
 
 from . import (
     config,
@@ -33,6 +34,17 @@ app = typer.Typer(
 )
 
 
+class ColorHandler(logging.StreamHandler):
+    """Custom handler to colour output messages"""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if record.levelno >= logging.ERROR:
+            record.msg = R + record.msg.replace(NC, NC + R) + NC
+        elif record.levelno >= logging.WARNING:
+            record.msg = Y + record.msg.replace(NC, NC + Y) + NC
+        return super().emit(record)
+
+
 @app.callback()
 def common(
     ctx: typer.Context,
@@ -53,7 +65,9 @@ def common(
     config._DETECTOR = detector
 
     logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO, format="%(message)s"
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(message)s",
+        handlers=[ColorHandler()],
     )
     logging.debug("Verbose output enabled")
 
@@ -77,8 +91,8 @@ except ModuleNotFoundError:
     @app.command(rich_help_panel=UTILITIES)
     def view(filenames: list[pathlib.Path]) -> None:
         """[s]View Jungfrau raw and intermediate data files.[/s] Requires napari module to be installed."""
-        print(
-            "[red]Error: Cannot view files without [b]napari[/b] module present. Please install it into your environment.[/red]"
+        logging.error(
+            f"Error: Cannot view files without {BOLD}napari{NC} module present. Please install it into your environment."
         )
         sys.exit(1)
 

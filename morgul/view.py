@@ -12,7 +12,7 @@ import napari
 import typer
 
 from . import config
-from .util import NC, B, G, R
+from .util import NC, B, G
 
 logger = logging.getLogger(__name__)
 
@@ -241,16 +241,14 @@ def view(filenames: Annotated[list[Path], typer.Argument(help="Data files to vie
             operator.and_, [determine_kinds(x) for x in open_files.values()]
         )
         if not common_kind:
-            logger.error(
-                f"{R}Error: Could not determine common filekind for input files.{NC}"
-            )
+            logger.error("Error: Could not determine common filekind for input files.")
             raise typer.Abort()
         kind = sorted(common_kind, key=lambda x: x.value)[-1]
 
         list_of_files = "\n".join("  - " + str(x) for x in filenames)
         if kind is None:
             logger.error(
-                f"{R}Error: Could not determine common file kind for\n{list_of_files}{NC}"
+                f"Error: Could not determine common file kind for\n{list_of_files}"
             )
             raise typer.Abort()
 
@@ -260,7 +258,5 @@ def view(filenames: Annotated[list[Path], typer.Argument(help="Data files to vie
             view_functions[kind](open_files)
             napari.run()
         else:
-            logger.error(
-                f"{R}Error: File kind {kind.name} is not currently supported{NC}"
-            )
+            logger.error(f"Error: File kind {kind.name} is not currently supported")
             raise typer.Abort()

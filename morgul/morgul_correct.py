@@ -22,8 +22,6 @@ from .util import (
     NC,
     B,
     G,
-    R,
-    Y,
     elapsed_time_string,
     find_mask,
     find_pedestal,
@@ -265,11 +263,11 @@ def datafile_prechecks(
         h5 = stack.enter_context(h5py.File(filename, "r"))
         # If this file is already corrected, ignore it
         if "data" not in h5:
-            logger.error(f"{R}Error: File {filename} does not have a 'data' dataset")
+            logger.error(f"Error: File {filename} does not have a 'data' dataset")
             raise typer.Abort()
         # If this was previously corrected, ignore it
         if "corrected" in h5["data"].attrs and h5["data"].attrs["corrected"]:
-            logger.warning(f"{Y}File {filename} contains corrected data, ignoring.{NC}")
+            logger.warning(f"File {filename} contains corrected data, ignoring.")
             h5.close()
             continue
         total_images += h5["data"].shape[0]
@@ -286,19 +284,17 @@ def datafile_prechecks(
         outputs = "\n".join(["  - " + str(x) for x in existing_output_filenames])
         logger.error(
             f"""
-{R}Error: The following files already exist and would be overwritten:
+Error: The following files already exist and would be overwritten:
 
 {outputs}
 
-please pass --force/-f if you want to overwrite these files.{NC}
+please pass --force/-f if you want to overwrite these files.
 """
         )
         raise typer.Abort()
 
     if not h5s:
-        logger.error(
-            f"{R}Error: No data files present after filtering out corrected{NC}"
-        )
+        logger.error("Error: No data files present after filtering out corrected")
         raise typer.Abort()
 
     return h5s
@@ -413,7 +409,7 @@ def correct(
                     f"{x*1000:g}" for x in pedestal_readers[filename].exposure_times
                 )
                 logger.error(
-                    f"{R}Error: {filename} is exposure {exposure_time*1000:g} ms, only: {availables} ms available."
+                    f"Error: {filename} is exposure {exposure_time*1000:g} ms, only: {availables} ms available."
                 )
                 raise typer.Abort()
 
@@ -422,12 +418,12 @@ def correct(
             if exposure_time not in (exps := mask_readers[filename].exposure_times):
                 availables = ", ".join(f"{x*1000:g}" for x in exps)
                 logger.warning(
-                    f"{Y}Warning: Using masker time point {availables}ms instead of {exposure_time*1000:g}ms{NC}"
+                    f"Warning: Using masker time point {availables}ms instead of {exposure_time*1000:g}ms"
                 )
 
             # Validate that the file is dynamic
             if not (gainmode := h5["gainmode"][()].decode()) == "dynamic":
-                logger.error(f"{R}Error: {filename} is '{gainmode}', not 'dynamic'{NC}")
+                logger.error(f"Error: {filename} is '{gainmode}', not 'dynamic'")
                 raise typer.Abort()
 
         # Start the correction/output process
@@ -444,7 +440,7 @@ def correct(
             # Check we have a mask for this module
             # if (exposure_time, module) not in masker:
             #     logger.warning(
-            #         f"{Y}Error: Do not have mask for (exptime: {exposure_time*1000:g} ms, module: {module}){NC}"
+            #         f"Error: Do not have mask for (exptime: {exposure_time*1000:g} ms, module: {module})"
             #     )
 
             out_filename = output_filename(filename, output)
@@ -456,7 +452,7 @@ def correct(
             # Safety check - don't overwrite if no --force
             if out_filename.is_file() and not force:
                 logger.error(
-                    f"{R}Error: {out_filename} exists but will not overwrite. Pass --force to overwrite."
+                    f"Error: {out_filename} exists but will not overwrite. Pass --force to overwrite."
                 )
                 raise typer.Abort()
 
