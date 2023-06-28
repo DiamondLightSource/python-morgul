@@ -1,7 +1,10 @@
 import logging
+import pathlib
+import sys
 from typing import Annotated
 
 import typer
+from rich import print
 
 from . import (
     config,
@@ -26,6 +29,7 @@ app = typer.Typer(
     no_args_is_help=True,
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
+    rich_markup_mode="rich",
 )
 
 
@@ -41,7 +45,7 @@ def common(
             help="The detector to run corrections for",
             case_sensitive=False,
         ),
-    ] = config.Detector.JF1MD,
+    ] = config.Detector.JF1MD.value,  # type: ignore
 ) -> None:
     # Currently, a choice of context or config function
     obj = ctx.ensure_object(dict)
@@ -54,20 +58,33 @@ def common(
     logging.debug("Verbose output enabled")
 
 
-app.command()(morgul_gainmap.gainmap)
-app.command()(morgul_pedestal.pedestal)
-app.command()(morgul_mask.mask)
-app.command()(morgul_correct.correct)
+CALIBRATION = "Calibration and Correction"
+UTILITIES = "Utilities"
+
+app.command(rich_help_panel=UTILITIES)(morgul_gainmap.gainmap)
+app.command(rich_help_panel=CALIBRATION)(morgul_pedestal.pedestal)
+app.command(rich_help_panel=CALIBRATION)(morgul_mask.mask)
+app.command(rich_help_panel=CALIBRATION)(morgul_correct.correct)
+app.command(rich_help_panel=CALIBRATION)(morgul_nxmx.nxmx)
+
 try:
     # view depends on things that might not be installed e.g. napari
     from .view import view
 
-    app.command()(view)
+    app.command(rich_help_panel=UTILITIES)(view)
 except ModuleNotFoundError:
-    pass
-app.command()(morgul_watch.watch)
-app.command()(morgul_pedestal.pedestal_fudge)
-app.command()(morgul_nxmx.nxmx)
+
+    @app.command(rich_help_panel=UTILITIES)
+    def view(filenames: list[pathlib.Path]) -> None:
+        """[s]View Jungfrau raw and intermediate data files.[/s] Requires napari module to be installed."""
+        print(
+            "[red]Error: Cannot view files without [b]napari[/b] module present. Please install it into your environment.[/red]"
+        )
+        sys.exit(1)
+
+
+app.command(rich_help_panel=UTILITIES)(morgul_watch.watch)
+app.command(rich_help_panel=UTILITIES)(morgul_pedestal.pedestal_fudge)
 
 
 def main() -> None:

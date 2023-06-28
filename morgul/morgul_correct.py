@@ -339,7 +339,9 @@ def correct(
     ] = False,
     lookup_tolerance: Annotated[Optional[int], typer.Option()] = None,
 ):
-    """Correction program for Jungfrau"""
+    """
+    Given data, pedestal and mask files, correct the data into photon counts.
+    """
 
     start_time = time.monotonic()
     detector = get_detector()

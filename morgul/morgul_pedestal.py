@@ -178,7 +178,7 @@ def pedestal(
     ] = False,
 ):
     """
-    Calibration setup for Jungfrau
+    Given dark images at different fixed gain modes, calculate the pedestal corrections tables.
     """
     start_time = time.monotonic()
     detector = get_detector()

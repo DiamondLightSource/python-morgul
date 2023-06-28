@@ -91,7 +91,7 @@ def mask(
         ),
     ] = None,
 ):
-    """Prepare a pixel mask from flatfield data"""
+    """Calculate a pixel mask from flatfield data."""
     start_time = time.monotonic()
     detector = get_detector()
     logger.info(f"Using detector: {G}{detector.value}{NC}")

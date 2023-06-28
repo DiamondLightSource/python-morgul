@@ -218,7 +218,7 @@ def watch(
         typer.Option("--wait", help="If the root path does not exist, wait for it to."),
     ] = False,
 ):
-    """Watch a data folder for new files appearing"""
+    """Watch a data folder for new files appearing."""
 
     # This command wants to control logging completely but the root
     # morgul object sets up logging itself, so we want to undo what it
