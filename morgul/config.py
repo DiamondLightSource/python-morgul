@@ -4,7 +4,9 @@ import configparser
 import enum
 import importlib.resources
 import logging
+import os
 import socket
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -15,7 +17,6 @@ import numpy.typing
 from .util import BOLD, NC, B
 
 logger = logging.getLogger(__name__)
-
 
 # def get_known_detectors() -> set[str]:
 #     """Get a list of known detectors from the configuration"""
@@ -38,6 +39,9 @@ logger = logging.getLogger(__name__)
 class Detector(str, enum.Enum):
     JF1MD = "jf1md"
     JF4MPSI = "jf4mpsi"
+
+    def __str__(self):
+        return self.value
 
 
 _DETECTOR: Detector | None = None
@@ -97,13 +101,22 @@ def get_module_from_id(module_id: str) -> dict[str, Any]:
 def get_calibration_path(hostname: str | None = None) -> Path:
     """Determine the calibration folder location"""
 
+    if gain_maps_path := os.getenv("JUNGFRAU_GAIN_MAPS"):
+        return Path(gain_maps_path)
+
+    # Try the "Original" way, by resolving the hostname mapped to hardcoded paths
     hostname = hostname or socket.getfqdn()
     config = get_config()
     candidates = sorted([x for x in config.keys() if hostname.endswith(x)], key=len)
     if not candidates:
-        raise RuntimeError(
-            f"Could not find configuration section matching hostname {hostname}"
+        logger.error(
+            f"""\
+Error:  Could not find hardcoded gain maps path for hostname {hostname}.
+        Please either update the hardcoded map file, or - more likely -
+        set the environment variable {BOLD}JUNGFRAU_GAIN_MAPS{NC} to point
+        to their location."""
         )
+        sys.exit(1)
     longest_match = candidates[-1]
     logging.debug(f"Matched configuration section {BOLD}{longest_match}{NC}")
     try:
@@ -117,7 +130,7 @@ def psi_gain_maps(detector: Detector) -> dict[str, numpy.typing.NDArray[numpy.fl
     """Read gain maps from installed location, return as 3 x numpy array g0, g1, g2"""
     config = get_config()
     calib = get_calibration_path()
-    print(f"Reading gain maps from: {B}{calib}{NC}")
+    logger.info(f"Reading gain maps from: {B}{calib}{NC}")
     result = {}
     modules = [x for x in config.keys() if x.startswith(detector)]
     for k in modules:
