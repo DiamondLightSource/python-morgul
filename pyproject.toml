@@ -27,6 +27,7 @@ napari = [
     {version = "^0.4.18rc2", python = "^3.11", optional = true},
     {version = "<0.4.18a0", python = "<3.11", optional = true},
 ]
+rich = "^13.4.2"
 
 [tool.poetry.scripts]
 morgul = "morgul.morgul:main"
