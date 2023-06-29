@@ -14,12 +14,30 @@ Other non-morgul analysis tools and scripts can be found in https://github.com/D
 - Collect flat-field data and run `morgul mask` to calculate a pixel mask.
 - Run `morgul correct`, giving the pedestal, mask, and data files. A
   `<data_file>_corrected.h5` output file will be written.
-- You can view raw, calibrated and pedestal data with `morgul view`. If taking serial data, generate an NXmx nexus file with `morgul nxs`.
+- You can view raw, calibrated and pedestal data with `morgul view`. If taking serial data, generate an NXmx nexus file with `morgul nxmx`.
 - Set `JUNGFRAU_CALIBRATION_LOG` and pass `--register` to `morgul pedestal` and
   `morgul mask` if you want pedestal and mask data to be picked up
   automatically for corrections based on the time-nearest registered
   calibration data.
 
+Example:
+```
+% morgul pedestal --register $DATA/2023-06-26-15-43-29_darks
+...
+...
+Written output file jf1md_2ms_2023-06-26_15-43-29_pedestal in 1m 13s.
+Copying jf1md_2ms_2023-06-26_15-43-29_pedestal to <log path>
+Writing calibration log entry:
+    PEDESTAL 2023-06-26T13:27:17.628631+00:00 0.002 <log_path>/jf1md_2ms_2023-06-26_15-43-29_pedestal
+
+% morgul correct -e 12.4  $DATA/acnir_1_0.h5
+
+Using detector: jf1md
+Reading gain maps from: /dls_sw/apps/jungfrau/calibration
+Correcting total of: 255960 images
+Reading 2ms pedestals from: <log_path>/jf1md_2ms_2023-06-26_15-43-29_pedestal.h5
+Reading 2ms mask from:      ........
+```
 ## Prerequisites
 
 To correct raw data, or generate masks from flatfield data, you must have the
@@ -101,7 +119,7 @@ simple NXmx file with `morgul nxs`.
 
 ## Using Morgul
 
-### `morgul pedestal`
+### Pedestal Calculation: `morgul pedestal`
 
 ```
 Usage: morgul pedestal [-o OUTPUT_NAME] [--register] DATA_FILE ...
@@ -129,7 +147,7 @@ you want to specifically change the output name and location, you can set this
 option.
 
 
-### `morgul mask`
+### Mask Generation: `morgul mask`
 
 ```
 Usage: morgul mask (--energy | -e) <keV> <PEDESTAL_FILE> FLAT_DATA ...
@@ -148,11 +166,100 @@ the same exposure times.
 `morgul mask` has the same extra options as -pedestal - `-o OUTPUT` for
 changing the default name, and `--register` for writing to the calibration log.
 
-### `morgul correct`
+### Correcting Raw Data: `morgul correct`
 
-### `morgul nxs`
+```
+Usage: morgul correct [-p PEDESTAL] [-m MASK] -e ENERGY_KEV DATA_FILE ...
+```
+
+Convert raw data to photon counts, by subtracting pedestals, masking, and
+applying the gain tables. Photon energy must be passed in explicitly (with
+`--energy KEV | -e KEV`).
+
+If no explicit pedestal (or mask) data is provided, and the environment
+variable `JUNGFRAU_CALIBRATION_LOG` is set, then this file will be searched for
+the nearest (in time) pedestal correction data that matches the exposure time
+of the data files being corrected e.g. pedestal data created with
+`morgul pedestal --register`
+
+#### Options
+
+- `-o OUTPUT`: By default, -correct will write out a corrected file in the same
+  folder as the raw data, with a `_corrected.h5` suffix. With `-o`, you can
+  select a different **folder** for these to be written to - this does not
+  control the output filename, merely where they are placed.
+- `--force`: By default, -correct will not overwrite existing files if they
+  already exist in the target location. Specifying `--force` overrides this
+  check.
+- `--lookup-tolerance`: In automatic pedestal mode, by default the closest
+  pedestal data (in time) is selected. If this is set, this specifies a maximum
+  time (in minutes) when looking for the nearest pedestal data. This is useful
+  to avoid accidentally e.g. using days-old pedestal data when starting a new
+  day of collection, and forgetting to generate a new pedestal file.
+
+### Nexus files for onward processing: `morgul nxmx`
+
+```
+Usage: morgul nxmx [-o output_name.h5] MODULE_CORRECTED_DATA ...
+```
+
+Generate a minimal
+[NXmx](https://manual.nexusformat.org/classes/applications/NXmx.html)
+still-image file, for onward processing and analysis. Currently NXmx files are
+written by the acquisition system only for rotation collections. For
+still/serial data sets this generates a minimalistic NXmx that can be used for
+processing. It requires one data file per module, and you can override the
+output filename with `-o OUTPUT_NAME.h5`.
+
+## Viewing data: `morgul view`
+
+```
+Usage: morgul view FILENAME ...
+```
+A simple [napari](https://github.com/napari/napari)-based viewer for inspecting
+input and output data from the morgul analysis steps. The kinds of data that it
+can view are:
+- Gain maps (as created by `morgul gainmap`)
+- Mask files (as created by `morgul mask`)
+- Pedestal files (from `morgul pedestal`) - all modules and gain modes are
+  displayed at once.
+- Raw data files - either a subset of modules on the detector, or all modules
+  on the detector, and panels will be laid out in their approximate positions.
+  More that one data collection of the same module is not supported.
+- Corrected data files - with the same conditions as raw.
+
+If not using the central install at Diamond, you will need to have napari and
+one if it's supported backends installed. Please see the "Prerequisites"
+section above for details on doing this.
 
 ## Errata
+
+### Advanced: Runtime monitoring: `morgul watch`
+
+```
+Usage: morgul watch <PATH>
+```
+
+A developer tool for usage on collections: This tool will watch a target root
+folder for new HDF5 files appearing, and display them once they become
+readable. Probably not useful for general usage.
+
+### Advanced: `morgul pedestal-fudge`
+
+```
+Usage: morgul pedestal-fudge INPUT_PEDESTAL EXPOSURE_TIME
+```
+
+Either extrapolates or divides down an existing set of pedestal corrections to
+a new exposure time. Probably a bad idea, and we have at time of writing no
+evidence that this results in valid pedestal files. Created because during the
+first commissioning run we inadvertantly collected some data at nonstandard
+exposure times, and didn't take corresponding dark images.
+
+Documented here for completion' sake, but should not be relied on. Supports
+`--register`, similarly to `morgul pedestal`, in case you want to make the
+process of "correcting" raw data with unproven pedestal calibrations more
+automatic.
 
 ### Expected Data Format
 

@@ -333,7 +333,12 @@ def correct(
     force: Annotated[
         bool, typer.Option("-f", "--force", help="Overwrite files that already exist")
     ] = False,
-    lookup_tolerance: Annotated[Optional[int], typer.Option()] = None,
+    lookup_tolerance: Annotated[
+        Optional[int],
+        typer.Option(
+            help="If set, only pedestal data collected within this many minutes will be selected when using the calibration log."
+        ),
+    ] = None,
 ):
     """
     Given data, pedestal and mask files, correct the data into photon counts.
@@ -393,7 +398,6 @@ def correct(
                 reader = find_mask(
                     timestamp,
                     exposure_time,
-                    within_minutes=lookup_tolerance,
                 )
                 if reader not in cached_maskers:
                     logger.info(
