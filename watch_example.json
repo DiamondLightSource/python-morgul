@@ -1,0 +1,898 @@
+[
+    [
+        "2023-06-26 11:29:29",
+        "blank1/alpha_dark_G0_0_0.h5",
+        "dynamic",
+        50,
+        1000
+    ],
+    [
+        "2023-06-26 11:29:29",
+        "blank1/alpha_dark_G0_1_0.h5",
+        "dynamic",
+        50,
+        1000
+    ],
+    [
+        "2023-06-26 11:30:25",
+        "blank1/alpha_dark_G2_0_0.h5",
+        "forceswitchg2",
+        50,
+        1000
+    ],
+    [
+        "2023-06-26 11:30:25",
+        "blank1/alpha_dark_G2_1_0.h5",
+        "forceswitchg2",
+        50,
+        1000
+    ],
+    [
+        "2023-06-26 11:35:46",
+        "blank2/aabb_dark_G2_0_0.h5",
+        "forceswitchg2",
+        10,
+        1000
+    ],
+    [
+        "2023-06-26 11:35:46",
+        "blank2/aabb_dark_G2_1_0.h5",
+        "forceswitchg2",
+        10,
+        1000
+    ],
+    [
+        "2023-06-26 11:36:02",
+        "blank2/aabb_0_0.h5",
+        "dynamic",
+        9.9,
+        6398
+    ],
+    [
+        "2023-06-26 11:36:02",
+        "blank2/aabb_1_0.h5",
+        "dynamic",
+        9.9,
+        6398
+    ],
+    [
+        "2023-06-26 11:43:57",
+        "blank3/bbcc_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:43:57",
+        "blank3/bbcc_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:44:06",
+        "blank3/bbcc_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:44:06",
+        "blank3/bbcc_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:44:16",
+        "blank3/bbcc_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:44:16",
+        "blank3/bbcc_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:44:26",
+        "blank3/bbcc_0_0.h5",
+        "dynamic",
+        4.9,
+        1598
+    ],
+    [
+        "2023-06-26 11:44:26",
+        "blank3/bbcc_1_0.h5",
+        "dynamic",
+        4.9,
+        1598
+    ],
+    [
+        "2023-06-26 11:49:20",
+        "blank4/ccdd_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:49:20",
+        "blank4/ccdd_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:49:29",
+        "blank4/ccdd_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:49:29",
+        "blank4/ccdd_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:49:39",
+        "blank4/ccdd_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:49:39",
+        "blank4/ccdd_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:53:23",
+        "blank5/ddee_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:53:23",
+        "blank5/ddee_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:53:33",
+        "blank5/ddee_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:53:33",
+        "blank5/ddee_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:53:42",
+        "blank5/ddee_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:53:42",
+        "blank5/ddee_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 11:53:53",
+        "blank5/ddee_0_0.h5",
+        "dynamic",
+        5,
+        1999
+    ],
+    [
+        "2023-06-26 11:53:53",
+        "blank5/ddee_1_0.h5",
+        "dynamic",
+        5,
+        1999
+    ],
+    [
+        "2023-06-26 13:41:41",
+        "hewl1a/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:41:41",
+        "hewl1a/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:41:51",
+        "hewl1a/hewl_0_0.h5",
+        "dynamic",
+        5,
+        212
+    ],
+    [
+        "2023-06-26 13:41:51",
+        "hewl1a/hewl_1_0.h5",
+        "dynamic",
+        5,
+        212
+    ],
+    [
+        "2023-06-26 13:45:25",
+        "hewl2a/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:45:25",
+        "hewl2a/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:45:34",
+        "hewl2a/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:45:34",
+        "hewl2a/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:45:44",
+        "hewl2a/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:45:44",
+        "hewl2a/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:45:55",
+        "hewl2a/hewl_0_0.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 13:45:55",
+        "hewl2a/hewl_0_0_corrected.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 13:45:55",
+        "hewl2a/hewl_1_0.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 13:45:55",
+        "hewl2a/hewl_1_0_corrected.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 13:52:52",
+        "hewl2b/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:52:52",
+        "hewl2b/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:53:01",
+        "hewl2b/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:53:01",
+        "hewl2b/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:53:11",
+        "hewl2b/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:53:11",
+        "hewl2b/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 13:53:22",
+        "hewl2b/hewl_0_0.h5",
+        "dynamic",
+        5,
+        12797
+    ],
+    [
+        "2023-06-26 13:53:22",
+        "hewl2b/hewl_0_0_corrected.h5",
+        "dynamic",
+        5,
+        12797
+    ],
+    [
+        "2023-06-26 13:53:22",
+        "hewl2b/hewl_1_0.h5",
+        "dynamic",
+        5,
+        12797
+    ],
+    [
+        "2023-06-26 13:53:22",
+        "hewl2b/hewl_1_0_corrected.h5",
+        "dynamic",
+        5,
+        12797
+    ],
+    [
+        "2023-06-26 14:22:41",
+        "hewl3a/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:22:41",
+        "hewl3a/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:22:51",
+        "hewl3a/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:22:51",
+        "hewl3a/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:23:00",
+        "hewl3a/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:23:00",
+        "hewl3a/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:23:11",
+        "hewl3a/hewl_0_0.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:23:11",
+        "hewl3a/hewl_0_0_corrected.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:23:11",
+        "hewl3a/hewl_1_0.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:23:11",
+        "hewl3a/hewl_1_0_corrected.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:29:38",
+        "hewl3b/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:29:38",
+        "hewl3b/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:29:48",
+        "hewl3b/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:29:48",
+        "hewl3b/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:29:58",
+        "hewl3b/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:29:58",
+        "hewl3b/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:34:58",
+        "hewl3bb/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:34:58",
+        "hewl3bb/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:35:07",
+        "hewl3bb/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:35:07",
+        "hewl3bb/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:35:17",
+        "hewl3bb/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:35:17",
+        "hewl3bb/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:35:28",
+        "hewl3bb/hewl_0_0.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:35:28",
+        "hewl3bb/hewl_0_0_corrected.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:35:28",
+        "hewl3bb/hewl_1_0.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:35:28",
+        "hewl3bb/hewl_1_0_corrected.h5",
+        "dynamic",
+        5,
+        12798
+    ],
+    [
+        "2023-06-26 14:59:11",
+        "hewl4a/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:59:11",
+        "hewl4a/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:59:21",
+        "hewl4a/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:59:21",
+        "hewl4a/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:59:31",
+        "hewl4a/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:59:31",
+        "hewl4a/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 14:59:42",
+        "hewl4a/hewl_0_0.h5",
+        "dynamic",
+        5,
+        12794
+    ],
+    [
+        "2023-06-26 14:59:42",
+        "hewl4a/hewl_0_0_corrected.h5",
+        "dynamic",
+        5,
+        12794
+    ],
+    [
+        "2023-06-26 14:59:42",
+        "hewl4a/hewl_1_0.h5",
+        "dynamic",
+        5,
+        12794
+    ],
+    [
+        "2023-06-26 14:59:42",
+        "hewl4a/hewl_1_0_corrected.h5",
+        "dynamic",
+        5,
+        12794
+    ],
+    [
+        "2023-06-26 15:08:42",
+        "hewl4b/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 15:08:42",
+        "hewl4b/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 15:08:52",
+        "hewl4b/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 15:08:52",
+        "hewl4b/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 15:09:02",
+        "hewl4b/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 15:09:02",
+        "hewl4b/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        5,
+        1000
+    ],
+    [
+        "2023-06-26 15:22:36",
+        "hewl5a/hewl_dark_G0_0_0.h5",
+        "dynamic",
+        1,
+        1000
+    ],
+    [
+        "2023-06-26 15:22:36",
+        "hewl5a/hewl_dark_G0_1_0.h5",
+        "dynamic",
+        1,
+        1000
+    ],
+    [
+        "2023-06-26 15:22:44",
+        "hewl5a/hewl_dark_G1_0_0.h5",
+        "forceswitchg1",
+        1,
+        1000
+    ],
+    [
+        "2023-06-26 15:22:44",
+        "hewl5a/hewl_dark_G1_1_0.h5",
+        "forceswitchg1",
+        1,
+        1000
+    ],
+    [
+        "2023-06-26 15:22:51",
+        "hewl5a/hewl_dark_G2_0_0.h5",
+        "forceswitchg2",
+        1,
+        1000
+    ],
+    [
+        "2023-06-26 15:22:51",
+        "hewl5a/hewl_dark_G2_1_0.h5",
+        "forceswitchg2",
+        1,
+        1000
+    ],
+    [
+        "2023-06-26 15:30:14",
+        "hewl5test/hewl_0_0.h5",
+        "dynamic",
+        1,
+        3990
+    ],
+    [
+        "2023-06-26 15:30:14",
+        "hewl5test/hewl_1_0.h5",
+        "dynamic",
+        1,
+        3990
+    ],
+    [
+        "2023-06-26 15:33:06",
+        "hewl5a1/hewl_0_0.h5",
+        "dynamic",
+        1,
+        95970
+    ],
+    [
+        "2023-06-26 15:33:06",
+        "hewl5a1/hewl_0_0_corrected.h5",
+        "dynamic",
+        1,
+        95970
+    ],
+    [
+        "2023-06-26 15:33:06",
+        "hewl5a1/hewl_1_0.h5",
+        "dynamic",
+        1,
+        95970
+    ],
+    [
+        "2023-06-26 15:33:06",
+        "hewl5a1/hewl_1_0_corrected.h5",
+        "dynamic",
+        1,
+        95970
+    ],
+    [
+        "2023-06-26 15:39:59",
+        "hewl5b1/hewl_0_0.h5",
+        "dynamic",
+        1,
+        96000
+    ],
+    [
+        "2023-06-26 15:39:59",
+        "hewl5b1/hewl_0_0_corrected.h5",
+        "dynamic",
+        1,
+        96000
+    ],
+    [
+        "2023-06-26 15:39:59",
+        "hewl5b1/hewl_1_0.h5",
+        "dynamic",
+        1,
+        96000
+    ],
+    [
+        "2023-06-26 15:39:59",
+        "hewl5b1/hewl_1_0_corrected.h5",
+        "dynamic",
+        1,
+        96000
+    ],
+    [
+        "2023-06-26 15:50:23",
+        "hewl6/hewl_0_0.h5",
+        "dynamic",
+        1,
+        38880
+    ],
+    [
+        "2023-06-26 15:50:23",
+        "hewl6/hewl_0_0_corrected.h5",
+        "dynamic",
+        1,
+        38880
+    ],
+    [
+        "2023-06-26 15:50:23",
+        "hewl6/hewl_1_0.h5",
+        "dynamic",
+        1,
+        38880
+    ],
+    [
+        "2023-06-26 15:50:23",
+        "hewl6/hewl_1_0_corrected.h5",
+        "dynamic",
+        1,
+        38880
+    ],
+    [
+        "2023-06-26 15:54:52",
+        "hewl6_2/hewl_0_0.h5",
+        "dynamic",
+        1,
+        229150
+    ],
+    [
+        "2023-06-26 15:54:52",
+        "hewl6_2/hewl_0_0_corrected.h5",
+        "dynamic",
+        1,
+        229150
+    ],
+    [
+        "2023-06-26 15:54:52",
+        "hewl6_2/hewl_1_0.h5",
+        "dynamic",
+        1,
+        225649
+    ],
+    [
+        "2023-06-26 15:54:52",
+        "hewl6_2/hewl_1_0_corrected.h5",
+        "dynamic",
+        1,
+        225649
+    ],
+    [
+        "2023-06-26 16:42:26",
+        "acnir3b/acnir_0_0.h5",
+        "dynamic",
+        2,
+        4000
+    ],
+    [
+        "2023-06-26 16:42:26",
+        "acnir3b/acnir_0_0_corrected.h5",
+        "dynamic",
+        2,
+        4000
+    ],
+    [
+        "2023-06-26 16:42:26",
+        "acnir3b/acnir_1_0.h5",
+        "dynamic",
+        2,
+        4000
+    ],
+    [
+        "2023-06-26 16:42:26",
+        "acnir3b/acnir_1_0_corrected.h5",
+        "dynamic",
+        2,
+        4000
+    ],
+    [
+        "2023-06-26 16:45:22",
+        "acnir4/acnir_0_0.h5",
+        "dynamic",
+        2,
+        255960
+    ],
+    [
+        "2023-06-26 16:45:22",
+        "acnir4/acnir_0_0_corrected.h5",
+        "dynamic",
+        2,
+        255960
+    ],
+    [
+        "2023-06-26 16:45:22",
+        "acnir4/acnir_1_0.h5",
+        "dynamic",
+        2,
+        255960
+    ],
+    [
+        "2023-06-26 16:45:22",
+        "acnir4/acnir_1_0_corrected.h5",
+        "dynamic",
+        2,
+        255960
+    ]
+]

@@ -28,6 +28,7 @@ napari = [
     {version = "<0.4.18a0", python = "<3.11", optional = true},
 ]
 rich = "^13.4.2"
+textual = "^0.28.1"
 
 [tool.poetry.scripts]
 morgul = "morgul.morgul:main"
@@ -35,6 +36,9 @@ morgul = "morgul.morgul:main"
 [tool.poetry.extras]
 all = ["napari"]
 view = ["napari"]
+
+[tool.poetry.group.dev.dependencies]
+textual = {version = "*", extras = ["dev"]}
 
 [build-system]
 requires = ["poetry-core"]
