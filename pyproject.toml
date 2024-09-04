@@ -18,7 +18,7 @@ h5py = "^3.11.0"
 tqdm = "^4.66.5"
 hdf5plugin = "^5.0.0"
 typer = "^0.12.5"
-python-dateutil = "^2.9.0.post0"
+python-dateutil = "^2.9.0"
 pint = "^0.24.3"
 pydantic = "^2.8.2"
 napari = { version = "^0.5.3", optional = true }
