@@ -23,6 +23,7 @@ pint = "^0.24.3"
 pydantic = "^2.8.2"
 napari = { version = "^0.5.3", optional = true }
 rich = "^13.8.0"
+watchdir = "^1.0.0"
 
 [tool.poetry.scripts]
 morgul = "morgul.morgul:main"
