@@ -12,7 +12,6 @@ import numpy as np
 import pint
 import typer
 from pydantic import BaseModel, Field
-from pydantic.generics import GenericModel
 
 T = TypeVar("T")
 
@@ -20,7 +19,7 @@ BOLD = "\033[1m"
 NC = "\033[0m"
 
 
-class AttrValue(GenericModel, Generic[T]):
+class AttrValue(BaseModel, Generic[T]):
     def __init__(self, value: T, **kwargs):
         super().__init__(value=value, **kwargs)
 
