@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Only consider files matching
 # FILTER_REGEX = r".+\.h5"
-FILTER_REGEX = r".+2023-06-26.+\/.+\.h5|.+260623\/.+\.h5"
+FILTER_REGEX = r".+2024-09-\d\d.+\/.+\.h5|.+\d\d09\d\d\/.+\.h5"
 
 # A cache file so that we can quickly re-present results
 CACHE_FILE = ".watcher_history"
