@@ -21,9 +21,14 @@ typer = "^0.12.5"
 python-dateutil = "^2.9.0.post0"
 pint = "^0.24.3"
 pydantic = "^2.8.2"
+napari = {version = "^0.5.3", optional = true}
 
 [tool.poetry.scripts]
 morgul = "morgul.morgul:main"
+
+[tool.poetry.extras]
+all = ["napari"]
+view = ["napari"]
 
 [build-system]
 requires = ["poetry-core"]

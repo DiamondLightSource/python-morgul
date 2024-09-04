@@ -337,7 +337,7 @@ def correct(
     force: Annotated[
         bool, typer.Option("-f", "--force", help="Overwrite files that already exist")
     ] = False,
-    lookup_tolerance: int | None = None,
+    lookup_tolerance: Annotated[Optional[int], typer.Option()] = None,
 ):
     """Correction program for Jungfrau"""
 
