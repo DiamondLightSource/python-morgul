@@ -1,4 +1,13 @@
-# from __future__ import annotations
+"""
+morgul_nxmx - Create still-shot nexus files with VDS pointers to data.
+
+Very roughly created by copying rayonix2nxs.py:
+    https://gist.github.com/ndevenish/3a5e577b7f7e6b654853fe5ff87bd6d6
+
+and hacking to make relevant to the Jungfrau 1M commissioning
+collections on I24 in June 2022. This may need lots extra work to make
+general.
+"""
 
 import copy
 import datetime
@@ -444,6 +453,7 @@ def nxmx(
     input: Annotated[list[Path], typer.Argument()],
     output: Annotated[Path, typer.Option()] = Path("output.h5"),
 ):
+    """Create an NXmx Nexus file pointing to corrected Jungfrau data."""
     # parser = ArgumentParser(description="Convert PAL Rayonix H5 file to nexus")
     # parser.add_argument(
     #     "-o",

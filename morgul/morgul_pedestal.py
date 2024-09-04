@@ -17,7 +17,7 @@ import tqdm
 import typer
 
 from .config import Detector, get_detector, get_module_info
-from .util import BOLD, NC, B, G, R, elapsed_time_string
+from .util import NC, B, G, elapsed_time_string
 
 logger = getLogger(__name__)
 
@@ -178,7 +178,7 @@ def pedestal(
     ] = False,
 ):
     """
-    Calibration setup for Jungfrau
+    Given dark images at different fixed gain modes, calculate the pedestal corrections tables.
     """
     start_time = time.monotonic()
     detector = get_detector()
@@ -230,7 +230,7 @@ def pedestal(
             # Validate we didn't get passed two from the same mode
             if gain_mode in module:
                 logger.error(
-                    f"{BOLD}{R}Error: Duplicate gain mode {gain_mode} (both {module[gain_mode].filename} and {filename}{NC})"
+                    f"Error: Duplicate gain mode {gain_mode} (both {module[gain_mode].filename} and {filename})"
                 )
                 raise typer.Abort()
             module[gain_mode] = data
@@ -242,7 +242,7 @@ def pedestal(
         for module_addr, gains in pedestal_data.items():
             if not len(gains) == len(GAIN_MODES):
                 logger.error(
-                    f"{R}Error: Incomplete data set. Module {module_addr} only has {len(gains)} gain modes, expected {len(GAIN_MODES)}{NC}"
+                    f"Error: Incomplete data set. Module {module_addr} only has {len(gains)} gain modes, expected {len(GAIN_MODES)}"
                 )
                 raise typer.Abort()
 
@@ -282,7 +282,7 @@ def pedestal(
         # logger.info("")
     elif register_calibration:
         logger.error(
-            f"{R}Error: Have generated calibration {output.name} but cannot register as JUNGFRAU_CALIBRATION_LOG is not set."
+            f"Error: Have generated calibration {output.name} but cannot register as JUNGFRAU_CALIBRATION_LOG is not set."
         )
         raise typer.Abort()
 
@@ -315,6 +315,7 @@ def pedestal_fudge(
         typer.Option(
             "-o",
             help="Name for the output HDF5 file. Default: <detector>_<exptime>ms_pedestal.h5",
+            show_default=False,
         ),
     ] = None,
 ):
@@ -344,7 +345,7 @@ def pedestal_fudge(
     )
     if output.exists() and not force:
         logger.error(
-            f"{R}Error: output file {output} already exists. Please pass --force to overwrite.{NC}"
+            f"Error: output file {output} already exists. Please pass --force to overwrite."
         )
         raise typer.Abort()
 
@@ -395,7 +396,7 @@ def pedestal_fudge(
         logged_pedestal = pedestal_log.parent / output.name
         if logged_pedestal.exists() and not force:
             logger.error(
-                f"{R}Error: Output file {logged_pedestal} already exists. Pass --force to overwrite.{NC}"
+                f"Error: Output file {logged_pedestal} already exists. Pass --force to overwrite."
             )
             raise typer.Abort()
 

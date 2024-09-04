@@ -16,7 +16,7 @@ def gainmap(
     ] = None,
 ) -> None:
     """
-    Convert binary gain-map files to HDF5 datasets
+    Convert binary gain-map files to HDF5 datasets.
     """
     detector = get_detector()
     print(f"Using detector:         {B}{detector}{NC}")

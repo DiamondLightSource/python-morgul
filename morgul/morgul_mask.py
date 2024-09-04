@@ -21,7 +21,7 @@ from .config import (
     psi_gain_maps,
 )
 from .morgul_correct import PedestalCorrections, correct_frame
-from .util import NC, B, G, R, elapsed_time_string
+from .util import NC, B, G, elapsed_time_string
 
 logger = logging.getLogger(__name__)
 
@@ -71,27 +71,43 @@ def mask(
     pedestal: Annotated[
         Path,
         typer.Argument(
-            help="Pedestal data file for the module(s), from 'morgul pedestal'. Used when correcting in order to calculate the mask."
+            help="Pedestal data file for the module(s), from 'morgul pedestal'. Used when correcting in order to calculate the mask.",
+            show_default=False,
         ),
     ],
     flat: Annotated[
         list[Path],
         typer.Argument(
-            help="Flat-field data to use for mask generation. Multiple modules for a single exposure time can be passed, but must be present in the pedestal file."
+            help="Flat-field data to use for mask generation. Multiple modules for a single exposure time can be passed, but must be present in the pedestal file.",
+            show_default=False,
         ),
     ],
     energy: Annotated[
-        float, typer.Option("-e", "--energy", help="photon energy (keV)")
+        float,
+        typer.Option(
+            "-e",
+            "--energy",
+            help="photon energy (keV)",
+            show_default=False,
+        ),
     ],
     output: Annotated[
         Optional[Path],
         typer.Option(
             "-o",
             help="Name for the output HDF5 file. Default: <detector>_<exptime>ms_mask.h5",
+            show_default=False,
         ),
     ] = None,
+    register_calibration: Annotated[
+        bool,
+        typer.Option(
+            "--register",
+            help="Copy the pedestal file and register in the central calibration log (pointed to by the JUNGFRAU_CALIBRATION_LOG environment variable)",
+        ),
+    ] = False,
 ):
-    """Prepare a pixel mask from flatfield data"""
+    """Calculate a pixel mask from flatfield data."""
     start_time = time.monotonic()
     detector = get_detector()
     logger.info(f"Using detector: {G}{detector.value}{NC}")
@@ -123,12 +139,12 @@ def mask(
                 exposure_time = exptime
                 if exptime not in pedestals.exposure_times:
                     logger.error(
-                        f"{R}Error: Flatfield has exposure {exptime} but pedestal data only contains ({', '.join(pedestals.exposure_times)}){NC}"
+                        f"Error: Flatfield has exposure {exptime} but pedestal data only contains ({', '.join(pedestals.exposure_times)})"
                     )
                     raise typer.Abort()
             elif exptime != exposure_time:
                 logger.error(
-                    f"{R}Error: flatfield file {filename} exposure time ({exptime} does not match the pedestal data ({exposure_time})"
+                    f"Error: flatfield file {filename} exposure time ({exptime} does not match the pedestal data ({exposure_time})"
                 )
                 raise typer.Abort()
             # Validate that this module is present in the pedestal data
@@ -137,12 +153,13 @@ def mask(
             )["module"]
             if not pedestals.has_pedestal(exposure_time, module):
                 logger.error(
-                    f"{R}Error: No data in pedestal file for module {module} for exposure {exposure_time*1000:g} ms{NC}"
+                    f"Error: No data in pedestal file for module {module} for exposure {exposure_time*1000:g} ms"
                 )
+                raise typer.Abort()
 
             if h5["gainmode"][()].decode() != "dynamic":
                 logger.error(
-                    f"{R}Error: Data in file {filename} is not gainmode=dynamic (instead is '{h5['gainmode'][()]}') and is not suitable for masking{NC}"
+                    f"Error: Data in file {filename} is not gainmode=dynamic (instead is '{h5['gainmode'][()]}') and is not suitable for masking"
                 )
                 raise typer.Abort()
 
@@ -192,7 +209,7 @@ def mask(
             f"Written output file {B}{output}{NC} in {elapsed_time_string(start_time)}."
         )
 
-    if "JUNGFRAU_CALIBRATION_LOG" in os.environ:
+    if "JUNGFRAU_CALIBRATION_LOG" in os.environ and register_calibration:
         calib_log = Path(os.environ["JUNGFRAU_CALIBRATION_LOG"])
         logged_calib = calib_log.parent / output.name
         logger.info(f"Copying {B}{output}{NC} to {B}{logged_calib}{NC}")

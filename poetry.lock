@@ -3129,4 +3129,4 @@ view = ["napari"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "a6d9747f022b3a8fdbb4d73d7e416068364ac0c78e4558b8dd2c50b38b9fe2c9"
+content-hash = "4dedf8b51b124663270aa126d712b6527459b47e4b3c7d834bc1299ce22ab102"

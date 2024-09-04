@@ -1,3 +1,0 @@
-[submodule "writer/bitshuffle"]
-	path = writer/bitshuffle
-	url = git@github.com:kiyo-masui/bitshuffle.git
