@@ -291,7 +291,6 @@ def watch(
     re_filter = re.compile(FILTER_REGEX)
     while True:
         new_files, dropped_paths = watcher.scan()
-        scan_time = time.monotonic()
 
         if first_scan:
             print(f"    Found {G}{len(new_files)}{NC} files, reading...")
@@ -321,7 +320,7 @@ def watch(
                 if filename in unscanned_files:
                     unscanned_files.remove(filename)
 
-            except (IOError, KeyError) as e:
+            except (IOError, KeyError):
                 unscanned_files.add(filename)
                 # processed.append(
                 #     {
@@ -351,7 +350,7 @@ def watch(
             try:
                 fzf.wait(timeout=SLEEP_TIME)
                 fzf_output = fzf.stdout.read()
-                logger.info("Output: " + fzf.stdout.read())
+                logger.info("Output: " + fzf_output)
                 return
             except subprocess.TimeoutExpired:
                 pass

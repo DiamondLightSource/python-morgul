@@ -8,9 +8,7 @@ authors = [
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
-packages = [
-    {include = "morgul"},
-]
+packages = [{ include = "morgul" }]
 include = ["morgul/morgul.ini"]
 
 [tool.poetry.dependencies]
@@ -29,10 +27,8 @@ morgul = "morgul.morgul:main"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.ruff]
+[tool.ruff.lint]
 # E712: Replaces (x == False) with (x is False). Deadly for numpy arrays.
 ignore = ["E501", "E741", "E712"]
-line-length = 88
-select = ["C9", "E", "F", "W", "I"]
+select = ["E", "F", "W", "I"]
 unfixable = ["F841"]
-

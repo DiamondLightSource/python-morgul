@@ -369,7 +369,7 @@ class JF1MD:
 
         MOD_FAST = 1030
         MOD_SLOW = 514
-        GAP_FAST = 12
+        GAP_FAST = 12  # noqa: F841
         GAP_SLOW = 38
 
         slow = (2 * MOD_SLOW) + GAP_SLOW
