@@ -11,6 +11,7 @@ general.
 
 import copy
 import datetime
+import json
 from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Type, TypeVar
 
@@ -409,6 +410,9 @@ def nxmx(
     # args = parser.parse_args()
     print(f"Reading {BOLD}{input}{NC}")
 
+    ep_file = Path(input[0]).parent / "experiment_params.json"
+    ep = json.loads(ep_file.read_bytes())
+
     source = JF1MD(input)
     # if args.input.resolve().parent == args.output.resolve().parent:
     #     print("Output to same folder as input; doing relative links")
@@ -492,7 +496,10 @@ def nxmx(
             "transformations": NXtransformations(
                 axes={
                     "omega": AttrTransformation(
-                        pint.Quantity(np.zeros((num_images,)), "deg"),
+                        pint.Quantity(
+                            np.cumsum(np.ones((num_images,)) * ep["image_width_deg"]),
+                            "deg",
+                        ),
                         transformation_type="rotation",
                         vector=(0, 1, 0),
                         depends_on=".",
