@@ -193,7 +193,7 @@ def embiggen(packed):
 
     assert packed.shape == (512, 1024)
 
-    bigger = numpy.full((514, 1030), 0xFFFFFFFF, dtype=numpy.int32)
+    bigger = numpy.full((514, 1030), -1, dtype=numpy.int32)
 
     for i in range(2):
         for j in range(4):
