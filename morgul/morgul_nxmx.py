@@ -34,8 +34,9 @@ class AttrValue(BaseModel, Generic[T]):
 
     value: T
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {
+        "arbitrary_types_allowed": True,
+    }
 
 
 class AttrStringShortName(AttrValue[str]):
@@ -207,10 +208,10 @@ class NXobject(BaseModel):
 
     extra_fields: dict[str, Any] = {}
 
-    class Config:
-        arbitrary_types_allowed = True
-
-        nexus_groups = ["extra_fields"]
+    model_config = {
+        "nexus_groups": ["extra_fields"],
+        "arbitrary_types_allowed": True,
+    }
 
 
 class NXsource(NXobject):
@@ -252,8 +253,9 @@ class NXdetector(NXobject):
         _handle_grouped_default("detector_module", solo_name="module", kwargs=kwargs)
         super().__init__(**kwargs)
 
-    class Config:
-        nexus_groups = ["detector_module"]
+    model_config = {
+        "nexus_groups": ["detector_module"],
+    }
 
 
 class NXinstrument(NXobject):
@@ -266,8 +268,9 @@ class NXinstrument(NXobject):
 
     detectors: dict[str, NXdetector] = {}
 
-    class Config:
-        nexus_groups = ["detectors"]
+    model_config = {
+        "nexus_groups": ["detectors"],
+    }
 
 
 class NXdata(NXobject):
@@ -277,15 +280,17 @@ class NXdata(NXobject):
 
     datas: dict[str, h5py.Dataset | h5py.ExternalLink] = {}
 
-    class Config:
-        nexus_groups = ["datas"]
+    model_config = {
+        "nexus_groups": ["datas"],
+    }
 
 
 class NXtransformations(NXobject):
     axes: dict[str, AttrTransformation] = {}
 
-    class Config:
-        nexus_groups = ["axes"]
+    model_config = {
+        "nexus_groups": ["axes"],
+    }
 
 
 class NXsample(NXobject):
@@ -293,14 +298,15 @@ class NXsample(NXobject):
     depends_on: str | None = "."
     transformations: dict[str, NXtransformations] = {}
 
-    class Config:
-        nexus_groups = ["transformations"]
+    model_config = {
+        "nexus_groups": ["transformations"],
+    }
 
 
 class NXentry(NXobject):
     definition: Literal["NXmx"] = "NXmx"
     start_time: datetime.datetime | None
-    end_time: datetime.datetime | None
+    end_time: datetime.datetime | None = None
     end_time_estimated: datetime.datetime | None
     data: NXdata | None = None
     sample: NXsample | None = None
@@ -319,12 +325,13 @@ class NXroot(NXobject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    class Config:
-        nexus_attrs = [
+    model_config = {
+        "nexus_attrs": [
             "file_name",
             "file_time",
             "HDF5_Version",
-        ]
+        ],
+    }
 
 
 # class PALH5:
