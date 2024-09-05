@@ -124,9 +124,13 @@ class EmitHandler:
         # if filename in self._entry_order:
 
         # Work out how to show the filename with maximum length
-        filename_trunc = str(filename.relative_to(Settings.get().root_path)).ljust(
-            path_length
+        filename_trunc = str(filename.relative_to(Settings.get().root_path))
+        filename_trunc = (
+            filename_trunc[: filename_trunc.index("/") + 1]
+            + " "
+            + filename_trunc[filename_trunc.index("/") + 1 :]
         )
+        filename_trunc = filename_trunc.ljust(path_length)
         if len(filename_trunc) > path_length:
             # Try subtracting from the name, not the folder name
             # root_path = entry["filename"].relative_to(Settings.get().root_path).parent()
@@ -135,7 +139,7 @@ class EmitHandler:
                 filename_trunc = filename_trunc[: path_length - 3] + "..."
             else:
                 shorten_by = len(filename_trunc) - path_length + 3
-                new_filename = "..." + filename.name[shorten_by:]
+                new_filename = " ..." + filename.name[shorten_by:]
                 logger.info(
                     f"Truncating '{filename_trunc}' to shorten by {shorten_by=}, {path_length=}, {len(filename_trunc)=} into {new_filename=} ({len(new_filename)=}), {MAX_WIDTH=}"
                 )
