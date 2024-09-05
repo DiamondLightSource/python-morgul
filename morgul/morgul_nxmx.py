@@ -333,30 +333,6 @@ class NXroot(NXobject):
     }
 
 
-# class PALH5:
-#     def __init__(self, filename: Path) -> None:
-#         self.filename = filename
-#         self.handle = h5py.File(self.filename)
-
-#         # Work out what the run number is
-#         runs = [
-#             int(x[1:])
-#             for x in self.handle.keys()
-#             if x.startswith("R") and x[1:].isdigit()
-#         ]
-#         assert len(runs) == 1, "More than one run in file, dont know how to handle"
-
-#         self.runs = {r: PALRayonixRun(self, self.handle[f"R{r:04d}"]) for r in runs}
-#         self.run = self.runs[runs[0]]
-
-#         # Cross-check the self-recorded header
-#         for n, data in self.runs.items():
-#             assert data.run_number == n
-
-#     def __getitem__(self, path):
-#         return self.handle[path]
-
-
 class JF1MD:
     def __init__(self, filenames: list[Path]):
         self.filenames = filenames
@@ -412,47 +388,6 @@ class JF1MD:
         group.create_virtual_dataset(
             "data_000001", layout, fillvalue=0b10000000000000000000000000000000
         )
-
-
-# class PALRayonixRun:
-#     def __init__(self, parent: PALH5, group: h5py.Group):
-#         self.parent = parent
-#         self.group = group
-#         assert "raymx_data" in self.group["scan_dat"]
-
-#     def __getitem__(self, item):
-#         return self.group[item]
-
-#     @property
-#     def run_number(self) -> int:
-#         return self.group["header/RunNumber"][()]
-
-#     @property
-#     def data_path(self) -> str:
-#         return self.group["scan_dat/raymx_data"].name
-
-#     @property
-#     def time(self) -> datetime.datetime:
-#         SK = dateutil.tz.gettz("Asia/Seoul")
-#         return datetime.datetime.strptime(
-#             self.group["header/time"].asstr()[()], "%Y-%m-%d %H:%M:%S"
-#         ).replace(tzinfo=SK)
-
-#     @property
-#     def wavelength(self) -> h5py.Dataset:
-#         return self.group["scan_dat/photon_wavelength"]
-
-#     @property
-#     def detector_model(self) -> str:
-#         return self.group["header/detector_0_modelname"].asstr()[()]
-
-#     @property
-#     def detector_name(self) -> str:
-#         return self.group["header/detector_0_name"].asstr()[()]
-
-#     @property
-#     def detector_distance(self) -> str:
-#         return self.group["header/detector_0_distance"][()]
 
 
 def nxmx(
