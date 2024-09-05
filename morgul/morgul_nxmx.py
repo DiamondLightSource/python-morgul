@@ -436,23 +436,23 @@ def nxmx(
 
     # 1066x1030
     # Work out the dimension values
-    detector_size = pint.Quantity(0.07995, "m")
+    # detector_size = pint.Quantity(0.07995, "m")
     # max_pixels = 5760
     # size_s, size_f = source.run["header/detector_0_number_of_pixel"]
     size_s, size_f = 1066, 1030
-    detector_distance = pint.Quantity(116, "mm")
-    x_pixel_size = pint.Quantity(75, "microns")
-    y_pixel_size = pint.Quantity(75, "microns")
+    detector_distance = pint.Quantity(121.0, "mm")
+    pixel_size = pint.Quantity(75, "microns")
+
+    beam_center_sf_px = (990.3, 598.2)  # Measured from refined data
+    beam_center_sf_mm = tuple((x * pixel_size).to("m") for x in beam_center_sf_px)
 
     detector = NXdetector(
         description="Jungfrau 1M ",
         local_name="JF1MD",
         depends_on="/entry/instrument/transformations/det_z",
         type="CCD",
-        x_pixel_size=pint.Quantity(75, "microns"),
-        y_pixel_size=pint.Quantity(75, "microns"),
-        beam_center_x=pint.Quantity(558, "pixels"),
-        beam_center_y=pint.Quantity(111, "pixels"),
+        x_pixel_size=pixel_size,
+        y_pixel_size=pixel_size,
         sensor_material="Si",
         sensor_thickness=pint.Quantity(320, "microns"),
         distance=detector_distance,
@@ -461,14 +461,14 @@ def nxmx(
                 data_origin=(0, 0),
                 data_size=(size_s, size_f),
                 fast_pixel_direction=AttrTransformation(
-                    x_pixel_size,
+                    pixel_size,
                     transformation_type="translation",
                     offset=(0, 0, 0),
                     vector=(-1, 0, 0),
                     depends_on="/entry/instrument/detector/module/module_offset",
                 ),
                 slow_pixel_direction=AttrTransformation(
-                    y_pixel_size,
+                    pixel_size,
                     transformation_type="translation",
                     offset=(0, 0, 0),
                     vector=(0, -1, 0),
@@ -478,8 +478,8 @@ def nxmx(
                     pint.Quantity(0, "m"),
                     transformation_type="translation",
                     offset=(
-                        (detector_size / 2).magnitude,
-                        (detector_size / 2).magnitude,
+                        beam_center_sf_mm[1].magnitude,
+                        beam_center_sf_mm[0].magnitude,
                         0,
                     ),
                     vector=(1, 0, 0),
