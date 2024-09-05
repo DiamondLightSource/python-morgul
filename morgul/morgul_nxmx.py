@@ -77,17 +77,16 @@ def _read_all_nexus_attrs(
     attrs = None
 
     for parent in target.__mro__:
-        if not hasattr(parent, "__config__"):
-            continue
-        if not hasattr(parent.__config__, name):
+        if not hasattr(parent, "model_config") or name not in parent.model_config:
             continue
         if attrs is None:
-            copied_attrs = copy.copy(getattr(parent.__config__, name))
+            copied_attrs = copy.copy(parent.model_config[name])
             if not isinstance(copied_attrs, (set, dict)):
                 copied_attrs = set(copied_attrs)
             attrs = copied_attrs
         else:
-            attrs.update(getattr(parent.__config__, name))
+            attrs.update(parent.model_config[name])
+
     return attrs or None
 
 
