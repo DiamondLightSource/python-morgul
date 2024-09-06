@@ -484,9 +484,11 @@ def correct(
                         pedestal_readers[filename][exposure_time, module],
                         gain_maps[module],
                         energy,
-                        mask_readers[filename][exposure_time, module]
-                        if not no_mask
-                        else None,
+                        (
+                            mask_readers[filename][exposure_time, module]
+                            if not no_mask
+                            else None
+                        ),
                     )
                     progress.update(1)
                     out_dataset[n] = embiggen(numpy.around(frame))

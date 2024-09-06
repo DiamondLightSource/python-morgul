@@ -125,11 +125,14 @@ class EmitHandler:
 
         # Work out how to show the filename with maximum length
         filename_trunc = str(filename.relative_to(Settings.get().root_path))
-        filename_trunc = (
-            filename_trunc[: filename_trunc.index("/") + 1]
-            + " "
-            + filename_trunc[filename_trunc.index("/") + 1 :]
-        )
+        try:
+            filename_trunc = (
+                filename_trunc[: filename_trunc.index("/") + 1]
+                + " "
+                + filename_trunc[filename_trunc.index("/") + 1 :]
+            )
+        except ValueError:
+            pass
         filename_trunc = filename_trunc.ljust(path_length)
         if len(filename_trunc) > path_length:
             # Try subtracting from the name, not the folder name
