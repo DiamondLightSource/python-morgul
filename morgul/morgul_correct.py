@@ -323,6 +323,10 @@ def correct(
             help="Pixel mask, from 'morgul mask'. If not specified, JUNGFRAU_CALIBRATION_LOG will be used to find a mask.",
         ),
     ] = None,
+    no_mask: Annotated[
+        bool,
+        typer.Option("--no-mask", help="If set, a mask will not be used"),
+    ] = False,
     output: Annotated[
         Optional[Path],
         typer.Option(
@@ -366,7 +370,7 @@ def correct(
 
             for filename in data_files:
                 pedestal_readers[filename] = pedestal_reader
-        if mask_file:
+        if mask_file and not no_mask:
             logger.info(f"Using mask from:        {B}{mask_file}{NC}")
             masker = Masker(detector, mask_file)
             for filename in data_files:
@@ -393,7 +397,7 @@ def correct(
                     cached_pedestals[reader] = PedestalCorrections(detector, reader)
 
                 pedestal_readers[filename] = cached_pedestals[reader]
-            if filename not in mask_readers:
+            if filename not in mask_readers and not no_mask:
                 # Try to find one
                 reader = find_mask(
                     timestamp,
@@ -421,9 +425,10 @@ def correct(
             # is not an error, but we do want to print the user a warning
             if exposure_time not in (exps := mask_readers[filename].exposure_times):
                 availables = ", ".join(f"{x*1000:g}" for x in exps)
-                logger.warning(
-                    f"Warning: Using masker time point {availables}ms instead of {exposure_time*1000:g}ms"
-                )
+                if availables:
+                    logger.warning(
+                        f"Warning: Using masker time point {availables}ms instead of {exposure_time*1000:g}ms"
+                    )
 
             # Validate that the file is dynamic
             if not (gainmode := h5["gainmode"][()].decode()) == "dynamic":
@@ -477,7 +482,9 @@ def correct(
                         pedestal_readers[filename][exposure_time, module],
                         gain_maps[module],
                         energy,
-                        mask_readers[filename][exposure_time, module],
+                        mask_readers[filename][exposure_time, module]
+                        if not no_mask
+                        else None,
                     )
                     progress.update(1)
                     out_dataset[n] = embiggen(numpy.around(frame))
