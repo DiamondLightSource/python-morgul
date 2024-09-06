@@ -423,7 +423,9 @@ def correct(
 
             # Validate that the mask reader has this exposure time. This
             # is not an error, but we do want to print the user a warning
-            if exposure_time not in (exps := mask_readers[filename].exposure_times):
+            if not no_mask and exposure_time not in (
+                exps := mask_readers[filename].exposure_times
+            ):
                 availables = ", ".join(f"{x*1000:g}" for x in exps)
                 if availables:
                     logger.warning(
