@@ -393,7 +393,10 @@ class JF1MD:
 
 def nxmx(
     input: Annotated[list[Path], typer.Argument()],
-    output: Annotated[Path, typer.Option()] = Path("output.h5"),
+    output: Annotated[Path, typer.Option("-o", "--output")] = Path("output.h5"),
+    energy: Annotated[
+        float, typer.Option("-e", "--energy", help="Energy of the beam, in keV")
+    ] = 12.4,
 ):
     """Create an NXmx Nexus file pointing to corrected Jungfrau data."""
     # parser = ArgumentParser(description="Convert PAL Rayonix H5 file to nexus")
@@ -537,13 +540,11 @@ def nxmx(
             ),
         ),
     )
-
-    root.entry.instrument.beam = NXbeam(
-        incident_wavelength=pint.Quantity(
-            0.99987,
-            units="angstrom",
-        )
-    )
+    ureg = pint.UnitRegistry()
+    wavelength = (
+        (ureg.speed_of_light * ureg.planck_constant) / ureg.Quantity(energy, "keV")
+    ).to("angstrom")
+    root.entry.instrument.beam = NXbeam(incident_wavelength=wavelength.to("angstrom"))
 
     print(f"Writing to {BOLD}{output}{NC}")
     nxs = h5py.File(output, "w")
