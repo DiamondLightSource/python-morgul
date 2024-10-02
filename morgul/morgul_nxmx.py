@@ -440,10 +440,10 @@ def nxmx(
     # max_pixels = 5760
     # size_s, size_f = source.run["header/detector_0_number_of_pixel"]
     size_s, size_f = 1066, 1030
-    detector_distance = pint.Quantity(121.0, "mm")
+    detector_distance = pint.Quantity(88.5, "mm")
     pixel_size = pint.Quantity(75, "microns")
 
-    beam_center_sf_px = (990.3, 598.2)  # Measured from refined data
+    beam_center_sf_px = (551.3, 543.5)
     beam_center_sf_mm = tuple((x * pixel_size).to("m") for x in beam_center_sf_px)
 
     detector = NXdetector(
