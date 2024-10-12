@@ -126,7 +126,7 @@ stateDiagram-v2
 
 When ready to analyse the data, either a `.nxs` file will have been written
 automatically on collection (for rotations), or you might need to generate a
-simple NXmx file with `morgul nxs`.
+simple NXmx file with `morgul nxmx`.
 
 [^1]:
     At this early stage, we haven't determined how often the mask needs to be
