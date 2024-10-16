@@ -397,6 +397,7 @@ def nxmx(
     energy: Annotated[
         float, typer.Option("-e", "--energy", help="Energy of the beam, in keV")
     ] = 12.4,
+    rotation_angle: Annotated[float | None, typer.Option("--rotation")] = None,
 ):
     """Create an NXmx Nexus file pointing to corrected Jungfrau data."""
     # parser = ArgumentParser(description="Convert PAL Rayonix H5 file to nexus")
@@ -414,7 +415,10 @@ def nxmx(
     print(f"Reading {BOLD}{input}{NC}")
 
     ep_file = Path(input[0]).parent / "experiment_params.json"
-    ep = json.loads(ep_file.read_bytes())
+    ep = None
+    if ep_file.exists():
+        ep = json.loads(ep_file.read_bytes())
+        rotation_angle = ep["image_width_deg"]
 
     source = JF1MD(input)
     # if args.input.resolve().parent == args.output.resolve().parent:
@@ -500,7 +504,7 @@ def nxmx(
                 axes={
                     "omega": AttrTransformation(
                         pint.Quantity(
-                            np.cumsum(np.ones((num_images,)) * ep["image_width_deg"]),
+                            np.cumsum(np.ones((num_images,)) * rotation_angle),
                             "deg",
                         ),
                         transformation_type="rotation",
