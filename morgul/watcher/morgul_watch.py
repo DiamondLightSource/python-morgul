@@ -12,15 +12,15 @@ from typing import IO, Annotated, Any
 import dateutil.tz as tz
 import h5py
 import typer
-from watchdir import Watcher
 
 from morgul.util import NC, B, G, R
+from watchdir import Watcher
 
 logger = logging.getLogger(__name__)
 
 # Only consider files matching
 # FILTER_REGEX = r".+\.h5"
-FILTER_REGEX = r".+\d\d\d\d\d.+\/.+\.h5|.+2024-09-\d\d.+\/.+\.h5|.+\d\d09\d\d\/.+\.h5"
+FILTER_REGEX = r".+\d\d\d\d\d.+\/.+\.h5|.+2024-09-\d\d.+\/.+\.h5|.+\d\d09\d\d\/.+\.h5|.+ssx/.+/.+\.h5"
 
 # A cache file so that we can quickly re-present results
 CACHE_FILE = ".watcher_history"
@@ -127,9 +127,9 @@ class EmitHandler:
         filename_trunc = str(filename.relative_to(Settings.get().root_path))
         try:
             filename_trunc = (
-                filename_trunc[: filename_trunc.index("/") + 1]
+                filename_trunc[: filename_trunc.rfind("/") + 1]
                 + " "
-                + filename_trunc[filename_trunc.index("/") + 1 :]
+                + filename_trunc[filename_trunc.rfind("/") + 1 :]
             )
         except ValueError:
             pass
@@ -315,6 +315,9 @@ def watch(
         # For each new file, open it and get some details
         for filename in sorted(new_files + list(unscanned_files)):
             # Filter the filenames
+            if "merged" in str(filename) or "corrected" in str(filename):
+                continue
+
             if not re_filter.match(str(filename)):
                 logger.debug(f"Ignoring file {filename} as does not match filter")
                 continue
