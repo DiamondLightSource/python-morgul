@@ -5,8 +5,25 @@ Junfrau 1M detector.
 
 Other non-morgul analysis tools and scripts can be found in https://github.com/DiamondLightSource/jungfrau-commissioning.
 
-## TL;DR
+## Installation
 
+Dependencies from `mamba` with:
+
+```
+mamba create -yp ENV napari pyside6 hdf5plugin h5py
+mamba activate ENV/
+```
+
+Then:
+
+```
+git clone git@github.com:DiamondLightSource/python-morgul.git # or your fork
+pip install -e python-morgul
+```
+
+N.B. the latter will install many things from `pip` which _probably_ could be installed in the `mamba` environment but this is assumed to be a self-contained install. `which morgul` should point to `bin/morgul` in the environment above.
+
+## TL;DR
 - Run at Diamond, or set `JUNGFRAU_GAIN_MAPS` to point to your download of the
   gain maps.
 - Collect darks at all three gain modes, and give them to `morgul pedestal` to
@@ -109,7 +126,7 @@ stateDiagram-v2
 
 When ready to analyse the data, either a `.nxs` file will have been written
 automatically on collection (for rotations), or you might need to generate a
-simple NXmx file with `morgul nxs`.
+simple NXmx file with `morgul nxmx`.
 
 [^1]:
     At this early stage, we haven't determined how often the mask needs to be
